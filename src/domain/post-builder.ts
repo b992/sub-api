@@ -1,5 +1,6 @@
 import type { HttpClient } from '../internal/http-client'
 import type { CreatePostRequest, CreatePostResponse } from '../internal'
+import type { PostService } from '../internal/services'
 
 /**
  * Builder for creating Substack posts with a fluent interface
@@ -16,7 +17,10 @@ export class PostBuilder {
   private postTags?: string[]
   private is_published: boolean = false
 
-  constructor(private readonly client: HttpClient) {}
+  constructor(
+    private readonly client: HttpClient,
+    private readonly postService: PostService
+  ) {}
 
   /**
    * Set the post title
@@ -128,36 +132,25 @@ export class PostBuilder {
 
   /**
    * Create the post as a draft
-   * 
-   * INVESTIGATION RESULTS:
-   * Post creation APIs are not yet discovered. See PostService.createPost() for details.
    */
   async createDraft(): Promise<CreatePostResponse> {
     const postData = this.build()
     postData.is_published = false
 
-    throw new Error(
-      'PostBuilder: Post creation not yet implemented. ' +
-      '\nSee PostService.createPost() for detailed investigation findings. ' +
-      '\nWORKAROUND: Create posts manually in Substack, then use update APIs.'
-    )
+    return await this.postService.createPost(postData)
   }
 
   /**
    * Create and publish the post immediately
-   * 
-   * INVESTIGATION RESULTS:
-   * Post creation APIs are not yet discovered. See PostService.createPost() for details.
+   * Note: Publishing via API may require additional investigation
    */
   async publish(): Promise<CreatePostResponse> {
     const postData = this.build()
-    postData.is_published = true
-
-    throw new Error(
-      'PostBuilder: Post creation not yet implemented. ' +
-      '\nSee PostService.createPost() for detailed investigation findings. ' +
-      '\nWORKAROUND: Create posts manually in Substack, then use publish APIs.'
-    )
+    // First create as draft
+    const draft = await this.postService.createPost(postData)
+    
+    // Then attempt to publish it
+    return await this.postService.publishPost(draft.id)
   }
 
   /**
@@ -172,9 +165,10 @@ export class PostBuilder {
 
   /**
    * Convenience method to create a simple text post
+   * Note: Requires a valid client and postService to be set later
    */
-  static simplePost(title: string, content: string, subtitle?: string): PostBuilder {
-    const builder = new PostBuilder({} as HttpClient) // Will be set by the profile
+  static simplePost(title: string, content: string, subtitle?: string): Omit<PostBuilder, 'createDraft' | 'publish'> {
+    const builder = new PostBuilder({} as HttpClient, {} as PostService)
     return builder
       .setTitle(title)
       .setBodyHtml(PostBuilder.formatAsHtml(content))

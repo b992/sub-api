@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="26" failures="0" errors="0" time="2.583">
+  <testsuite name="note publishing tests" errors="0" failures="0" skipped="0" timestamp="2025-09-30T20:58:35" time="2.154" tests="1">
+    <testcase classname="note publishing tests" name="should build and publish note with correct request structure and response" time="0.061">
+    </testcase>
+  </testsuite>
+  <testsuite name="note with link attachment integration tests" errors="0" failures="0" skipped="0" timestamp="2025-09-30T20:58:35" time="2.232" tests="4">
+    <testcase classname="note with link attachment integration tests" name="should create attachment and publish note with correct request structure" time="0.083">
+    </testcase>
+    <testcase classname="note with link attachment integration tests" name="should build complex note with attachment and correct structure" time="0.022">
+    </testcase>
+    <testcase classname="note with link attachment integration tests" name="should handle different URL formats correctly" time="0.02">
+    </testcase>
+    <testcase classname="note with link attachment integration tests" name="should work with lists and complex formatting" time="0.014">
+    </testcase>
+  </testsuite>
+  <testsuite name="SubstackClient Integration Tests" errors="0" failures="0" skipped="0" timestamp="2025-09-30T20:58:35" time="2.242" tests="21">
+    <testcase classname="SubstackClient Integration Tests › Happy Path Scenarios › testConnectivity" name="should test API connectivity" time="0.024">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Happy Path Scenarios › profileForId" name="should retrieve profile by user ID with sample data" time="0.03">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Happy Path Scenarios › profileForId" name="should return Profile instance with all expected properties" time="0.027">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Happy Path Scenarios › profileForId" name="should handle large user IDs correctly" time="0.011">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Happy Path Scenarios › profileForSlug" name="should retrieve profile by slug with sample data" time="0.014">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Happy Path Scenarios › profileForSlug" name="should handle profileForSlug method use case workflow" time="0.019">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Happy Path Scenarios › ownProfile" name="should handle own profile retrieval workflow" time="0.014">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › profileForSlug" name="should reject empty slug parameter" time="0.001">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › profileForSlug" name="should reject whitespace-only slug parameter" time="0.001">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › profileForSlug" name="should handle non-existent slug gracefully" time="0.001">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › profileForId" name="should handle non-existent user ID gracefully" time="0">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › commentForId" name="should validate comment ID type - non-numeric string" time="0">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › commentForId" name="should validate comment ID type - alphanumeric string" time="0.001">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › commentForId" name="should handle non-existent comment ID" time="0">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › commentForId" name="should get comment by ID with sample data" time="0.001">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › postForId" name="should handle non-existent post ID" time="0.001">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › postForId" name="should retrieve full post by ID with sample data" time="0.002">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › postForId" name="should handle full post workflow with all expected properties" time="0.002">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Corner Cases and Error Handling › noteForId" name="should handle non-existent note ID" time="0.001">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Infrastructure Tests" name="should have integration server available" time="0">
+    </testcase>
+    <testcase classname="SubstackClient Integration Tests › Infrastructure Tests" name="should serve sample data correctly" time="0.003">
+    </testcase>
+  </testsuite>
+</testsuites>

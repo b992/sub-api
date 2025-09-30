@@ -6,6 +6,15 @@ import type { HttpClient } from '../http-client'
 /**
  * Service responsible for post-related HTTP operations
  * Returns internal types that can be transformed into domain models
+ * 
+ * INVESTIGATION RESULTS (Sept 30, 2025):
+ * ✅ POST /api/v1/drafts - Creates new draft (WORKS on publication domain)
+ * ✅ GET /api/v1/drafts/{id} - Gets draft details (WORKS)
+ * ✅ PUT /api/v1/drafts/{id} - Updates draft (WORKS)
+ * ✅ GET /api/v1/post_management/drafts - Lists drafts (WORKS)
+ * ✅ GET /api/v1/posts/by-id/{id} - Gets full post (WORKS on global domain)
+ * 
+ * KEY INSIGHT: Draft endpoints work on publication domain, NOT global substack.com!
  */
 export class PostService {
   constructor(
@@ -18,26 +27,18 @@ export class PostService {
    * @param id - The post ID
    * @returns Promise<SubstackFullPost> - Raw full post data from API (validated)
    * @throws {Error} When post is not found, API request fails, or validation fails
-   *
-   * Note: Uses SubstackFullPostCodec to validate the full post response from /posts/by-id/:id
-   * which includes body_html, postTags, reactions, and other fields not present in preview responses.
-   * This codec is specifically designed for FullPost construction.
    */
   async getPostById(id: number): Promise<SubstackFullPost> {
-    // Post lookup by ID must use the global substack.com endpoint, not publication-specific hostnames
+    // Post lookup by ID must use the global substack.com endpoint
     const rawResponse = await this.globalHttpClient.get<{ post: unknown }>(
       `/api/v1/posts/by-id/${id}`
     )
 
-    // Extract the post data from the wrapper object
     if (!rawResponse.post) {
       throw new Error('Invalid response format: missing post data')
     }
 
-    // Transform the raw post data to match our codec expectations
     const postData = this.transformPostData(rawResponse.post as any)
-
-    // Validate the response with SubstackFullPostCodec for full post data including body_html
     return decodeOrThrow(SubstackFullPostCodec, postData, 'Full post response')
   }
 
@@ -53,6 +54,91 @@ export class PostService {
     }
 
     return transformedPost
+  }
+
+  /**
+   * Convert HTML to Substack's JSON document format
+   * Basic implementation - handles common HTML tags
+   */
+  private htmlToSubstackJson(html: string): any {
+    const content: any[] = []
+    
+    if (!html || html.trim() === '') {
+      return { type: 'doc', content: [] }
+    }
+
+    // Simple HTML parsing - convert basic tags to Substack format
+    const lines = html.split('\n').filter(line => line.trim())
+    
+    for (const line of lines) {
+      const trimmed = line.trim()
+      
+      // Heading 2
+      if (trimmed.match(/^<h2[^>]*>(.*?)<\/h2>/i)) {
+        const text = trimmed.replace(/<h2[^>]*>(.*?)<\/h2>/i, '$1').replace(/<[^>]+>/g, '')
+        content.push({
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text }]
+        })
+      }
+      // Heading 3
+      else if (trimmed.match(/^<h3[^>]*>(.*?)<\/h3>/i)) {
+        const text = trimmed.replace(/<h3[^>]*>(.*?)<\/h3>/i, '$1').replace(/<[^>]+>/g, '')
+        content.push({
+          type: 'heading',
+          attrs: { level: 3 },
+          content: [{ type: 'text', text }]
+        })
+      }
+      // Paragraph
+      else if (trimmed.match(/^<p[^>]*>(.*?)<\/p>/i)) {
+        const text = trimmed.replace(/<p[^>]*>(.*?)<\/p>/i, '$1').replace(/<[^>]+>/g, '')
+        if (text) {
+          content.push({
+            type: 'paragraph',
+            content: [{ type: 'text', text }]
+          })
+        }
+      }
+      // List items (unordered)
+      else if (trimmed.match(/^<ul[^>]*>(.*?)<\/ul>/is)) {
+        const items = trimmed.match(/<li[^>]*>(.*?)<\/li>/gi) || []
+        const listItems = items.map(item => {
+          const text = item.replace(/<li[^>]*>(.*?)<\/li>/i, '$1').replace(/<[^>]+>/g, '')
+          return {
+            type: 'listItem',
+            content: [{
+              type: 'paragraph',
+              content: [{ type: 'text', text }]
+            }]
+          }
+        })
+        if (listItems.length > 0) {
+          content.push({
+            type: 'bulletList',
+            content: listItems
+          })
+        }
+      }
+      // Single list item (when not wrapped in ul)
+      else if (trimmed.match(/^<li[^>]*>(.*?)<\/li>/i)) {
+        const text = trimmed.replace(/<li[^>]*>(.*?)<\/li>/i, '$1').replace(/<[^>]+>/g, '')
+        // Skip - should be part of a list
+      }
+      // Plain text or other HTML
+      else if (trimmed && !trimmed.startsWith('<')) {
+        content.push({
+          type: 'paragraph',
+          content: [{ type: 'text', text: trimmed }]
+        })
+      }
+    }
+
+    return {
+      type: 'doc',
+      content: content.length > 0 ? content : []
+    }
   }
 
   /**
@@ -81,65 +167,195 @@ export class PostService {
   /**
    * Create a new post draft
    * @param postData - The post data to create
-   * @returns Promise<CreatePostResponse> - The created post data
-   * @throws {Error} When post creation fails
+   * @returns Promise<CreatePostResponse> - The created draft data
+   * @throws {Error} When draft creation fails
    * 
-   * INVESTIGATION RESULTS:
-   * - /api/v1/posts does NOT exist on Substack (404)
-   * - /api/v1/post_management/* endpoints are READ-ONLY (tested: 404 on POST)
-   * - Post creation likely uses a non-REST mechanism (form submission, WebSocket, etc.)
-   * - Browser creates posts automatically when opening editor UI
-   * 
-   * WORKING ENDPOINTS:
-   * - GET /api/v1/posts/by-id/{id} (global domain)
-   * - GET /api/v1/post_management/drafts (publication domain) 
-   * - GET /api/v1/post_management/published (publication domain)
+   * NOTE: This endpoint works on the PUBLICATION domain, not global substack.com
+   * The API requires empty POST first, then PUT to update with content
    */
   async createPost(postData: CreatePostRequest): Promise<CreatePostResponse> {
-    throw new Error(
-      'Post creation through API is not yet implemented. ' +
-      '\n\nINVESTIGATION FINDINGS:' +
-      '\n• /api/v1/posts - does NOT exist (404)' +
-      '\n• /api/v1/post_management/* - READ-ONLY endpoints' +
-      '\n• Browser creates posts via non-REST mechanism' +
-      '\n\nNEXT STEPS:' +
-      '\n• Reverse engineer browser post creation flow' +
-      '\n• Investigate form-based or WebSocket mechanisms' +
-      '\n• Consider using existing post update endpoints with pre-created drafts' +
-      '\n\nWORKAROUND: Create posts manually in Substack dashboard, then use update/publish APIs'
-    )
+    // Step 1: Create an empty draft (POST /api/v1/drafts)
+    // Note: draft_bylines is required (can be empty array for single author)
+    const draftResponse = await this.httpClient.post<{
+      id: number
+      draft_title?: string
+      draft_subtitle?: string
+      draft_body?: string
+      publication_id: number
+      created_at: string
+      draft_updated_at: string
+      slug?: string
+      canonical_url?: string
+    }>('/api/v1/drafts', {
+      draft_bylines: []
+    })
+
+    const draftId = draftResponse.id
+
+    // Step 2: If there's content, update the draft (PUT /api/v1/drafts/{id})
+    if (postData.title || postData.body_html) {
+      // Convert HTML to Substack's JSON document format
+      const bodyJson = this.htmlToSubstackJson(postData.body_html || '')
+      
+      const updatePayload = {
+        draft_title: postData.title,
+        draft_subtitle: postData.subtitle,
+        draft_body: JSON.stringify(bodyJson), // Must be stringified JSON!
+        type: postData.type || 'newsletter',
+        audience: postData.audience || 'everyone',
+        description: postData.description,
+        cover_image: postData.cover_image
+      }
+
+      // Use a proper PUT request
+      const updatedDraft = await this.httpClient.request<any>(
+        `/api/v1/drafts/${draftId}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(updatePayload)
+        }
+      )
+
+      // Return the updated draft response
+      return {
+        id: updatedDraft.id || draftId,
+        title: updatedDraft.draft_title || postData.title,
+        subtitle: updatedDraft.draft_subtitle || postData.subtitle,
+        slug: updatedDraft.slug || '',
+        body_html: updatedDraft.body_html || postData.body_html,
+        type: updatedDraft.type || postData.type || 'newsletter',
+        is_published: false,
+        post_date: updatedDraft.draft_updated_at || draftResponse.draft_updated_at,
+        canonical_url: updatedDraft.canonical_url || '',
+        audience: updatedDraft.audience || postData.audience || 'everyone',
+        publication_id: updatedDraft.publication_id || draftResponse.publication_id,
+        cover_image: postData.cover_image,
+        description: postData.description,
+        postTags: postData.postTags,
+        reactions: {},
+        restacks: 0
+      }
+    }
+
+    // Return just the empty draft if no content provided
+    return {
+      id: draftId,
+      title: '',
+      subtitle: postData.subtitle,
+      slug: draftResponse.slug || '',
+      body_html: '',
+      type: postData.type || 'newsletter',
+      is_published: false,
+      post_date: draftResponse.draft_updated_at,
+      canonical_url: draftResponse.canonical_url || '',
+      audience: postData.audience || 'everyone',
+      publication_id: draftResponse.publication_id,
+      cover_image: postData.cover_image,
+      description: postData.description,
+      postTags: postData.postTags,
+      reactions: {},
+      restacks: 0
+    }
   }
 
   /**
-   * Update an existing post
+   * Update an existing draft
    * @param postData - The post data to update (must include id)
-   * @returns Promise<CreatePostResponse> - The updated post data
-   * @throws {Error} When post update fails
+   * @returns Promise<CreatePostResponse> - The updated draft data
+   * @throws {Error} When draft update fails
    */
   async updatePost(postData: UpdatePostRequest): Promise<CreatePostResponse> {
     const { id, ...updateData } = postData
-    const response = await this.httpClient.post<CreatePostResponse>(
-      `/api/v1/posts/${id}`,
-      updateData
+    
+    // Convert HTML to Substack's JSON format
+    const bodyJson = updateData.body_html ? this.htmlToSubstackJson(updateData.body_html) : undefined
+    
+    // Use PUT to update the draft
+    const updatePayload = {
+      draft_title: updateData.title,
+      draft_subtitle: updateData.subtitle,
+      draft_body: bodyJson ? JSON.stringify(bodyJson) : undefined, // Must be stringified JSON!
+      type: updateData.type,
+      audience: updateData.audience
+    }
+
+    const response = await this.httpClient.request<any>(
+      `/api/v1/drafts/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(updatePayload)
+      }
     )
 
-    return response
+    return {
+      id: response.id || id,
+      title: updateData.title || response.draft_title,
+      subtitle: updateData.subtitle,
+      slug: response.slug || '',
+      body_html: updateData.body_html || '', // We sent HTML, return what we sent
+      type: response.type || 'newsletter',
+      is_published: response.is_published || false,
+      post_date: response.draft_updated_at || new Date().toISOString(),
+      canonical_url: response.canonical_url || '',
+      audience: response.audience || 'everyone',
+      publication_id: response.publication_id,
+      cover_image: updateData.cover_image,
+      description: updateData.description,
+      postTags: updateData.postTags,
+      reactions: response.reactions || {},
+      restacks: response.restacks || 0
+    }
   }
 
   /**
-   * Publish a post
-   * @param postId - The post ID to publish
+   * Publish a draft
+   * @param postId - The draft ID to publish
    * @param options - Publishing options
    * @returns Promise<CreatePostResponse> - The published post data
-   * @throws {Error} When post publishing fails
+   * @throws {Error} When publishing fails
+   * 
+   * TODO: Find the actual publish endpoint - might be /api/v1/drafts/{id}/publish
    */
   async publishPost(postId: number, options: PublishPostRequest = {}): Promise<CreatePostResponse> {
-    const response = await this.httpClient.post<CreatePostResponse>(
-      `/api/v1/posts/${postId}/publish`,
-      options
-    )
+    // Try the publish endpoint
+    try {
+      const response = await this.httpClient.post<any>(
+        `/api/v1/drafts/${postId}/publish`,
+        options
+      )
+      
+      return this.transformToPostResponse(response)
+    } catch (error) {
+      throw new Error(
+        `Failed to publish post ${postId}. ` +
+        `The publish endpoint may require investigation. ` +
+        `Error: ${(error as Error).message}`
+      )
+    }
+  }
 
-    return response
+  /**
+   * Transform API response to CreatePostResponse format
+   */
+  private transformToPostResponse(response: any): CreatePostResponse {
+    return {
+      id: response.id,
+      title: response.title || response.draft_title,
+      subtitle: response.subtitle || response.draft_subtitle,
+      slug: response.slug || '',
+      body_html: response.body_html || response.draft_body,
+      type: response.type || 'newsletter',
+      is_published: response.is_published || false,
+      post_date: response.post_date || response.draft_updated_at || new Date().toISOString(),
+      canonical_url: response.canonical_url || '',
+      audience: response.audience || 'everyone',
+      publication_id: response.publication_id,
+      cover_image: response.cover_image,
+      description: response.description,
+      postTags: response.postTags,
+      reactions: response.reactions || {},
+      restacks: response.restacks || 0
+    }
   }
 
   /**
@@ -221,11 +437,23 @@ export class PostService {
   }
 
   /**
-   * Delete a post
-   * @param postId - The post ID to delete
-   * @throws {Error} When post deletion fails
+   * Delete a draft
+   * @param postId - The draft ID to delete
+   * @throws {Error} When deletion fails
+   * 
+   * TODO: Find the actual delete endpoint - might be DELETE /api/v1/drafts/{id}
    */
   async deletePost(postId: number): Promise<void> {
-    await this.httpClient.post(`/api/v1/posts/${postId}/delete`, {})
+    try {
+      await this.httpClient.request(`/api/v1/drafts/${postId}`, {
+        method: 'DELETE'
+      })
+    } catch (error) {
+      throw new Error(
+        `Failed to delete draft ${postId}. ` +
+        `The delete endpoint may require investigation. ` +
+        `Error: ${(error as Error).message}`
+      )
+    }
   }
 }

@@ -94,7 +94,7 @@ async function liveTest() {
     console.log('\n🎊 POST CREATION SUCCESSFUL!')
     console.log(`📝 Title: "${post.title}"`)
     console.log(`🆔 ID: ${post.id}`)
-    console.log(`🔗 URL: ${post.url || 'Draft URL not available'}`)
+    console.log(`🔗 Slug: ${post.slug || 'Draft slug not yet generated'}`)
     console.log(`📊 Post created successfully!`)
     console.log(`🏷️  Tags: ${post.postTags?.join(', ') || 'none'}`)
     console.log(`📅 Created: ${new Date(post.publishedAt).toLocaleString()}`)

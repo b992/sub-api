@@ -58,7 +58,7 @@ export class OwnProfile extends Profile {
    * Create a new post builder that can be used to construct and create a post
    */
   newPost(): PostBuilder {
-    return new PostBuilder(this.client)
+    return new PostBuilder(this.client, this.postService)
   }
 
   /**
