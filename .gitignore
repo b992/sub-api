@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Test coverage and results
+coverage/
+junit.xml
+*.lcov
+
+# Environment and credential files
+.env
+.env.*
+credentials*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+.DS_Store?
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
