@@ -11,12 +11,29 @@ export interface CreatePostRequest {
   is_published?: boolean
   post_date?: string
   slug?: string
+  
+  // SEO and Social Media
   description?: string
   cover_image?: string
-  should_send_free_preview?: boolean
-  write_comment_permissions?: 'everyone' | 'paid' | 'founding'
+  search_engine_title?: string
+  search_engine_description?: string
+  social_title?: string
+  
+  // Section and Tags
   section_id?: number
   postTags?: string[]
+  
+  // Advanced Settings
+  should_send_free_preview?: boolean
+  write_comment_permissions?: 'everyone' | 'paid' | 'founding' | 'no_one'
+  default_comment_sort?: 'best_first' | 'newest_first' | 'oldest_first'
+  show_guest_bios?: boolean
+  free_unlock_required?: boolean
+  exempt_from_archive_paywall?: boolean
+  explicit?: boolean
+  hide_from_feed?: boolean
+  editor_v2?: boolean
+  meter_type?: 'none' | 'paywall'
 }
 
 export interface CreatePostResponse {

@@ -16,6 +16,20 @@ export class PostBuilder {
   private cover_image?: string
   private postTags?: string[]
   private is_published: boolean = false
+  
+  // SEO and Social Media
+  private search_engine_title?: string
+  private search_engine_description?: string
+  private social_title?: string
+  
+  // Section
+  private section_id?: number
+  
+  // Advanced Settings
+  private write_comment_permissions?: 'everyone' | 'paid' | 'founding' | 'no_one'
+  private default_comment_sort?: 'best_first' | 'newest_first' | 'oldest_first'
+  private explicit?: boolean
+  private hide_from_feed?: boolean
 
   constructor(
     private readonly client: HttpClient,
@@ -106,6 +120,70 @@ export class PostBuilder {
   }
 
   /**
+   * Set the section ID (default: 194500 - Whiskey & Flowers 🌸)
+   */
+  setSection(section_id: number): PostBuilder {
+    this.section_id = section_id
+    return this
+  }
+
+  /**
+   * Set SEO title for search engines
+   */
+  setSearchEngineTitle(title: string): PostBuilder {
+    this.search_engine_title = title
+    return this
+  }
+
+  /**
+   * Set SEO description for search engines
+   */
+  setSearchEngineDescription(description: string): PostBuilder {
+    this.search_engine_description = description
+    return this
+  }
+
+  /**
+   * Set social media title (for Twitter, Facebook, etc.)
+   */
+  setSocialTitle(title: string): PostBuilder {
+    this.social_title = title
+    return this
+  }
+
+  /**
+   * Set comment permissions
+   */
+  setCommentPermissions(permissions: 'everyone' | 'paid' | 'founding' | 'no_one'): PostBuilder {
+    this.write_comment_permissions = permissions
+    return this
+  }
+
+  /**
+   * Set default comment sorting
+   */
+  setCommentSort(sort: 'best_first' | 'newest_first' | 'oldest_first'): PostBuilder {
+    this.default_comment_sort = sort
+    return this
+  }
+
+  /**
+   * Mark content as explicit
+   */
+  setExplicit(explicit: boolean): PostBuilder {
+    this.explicit = explicit
+    return this
+  }
+
+  /**
+   * Hide post from feed
+   */
+  setHideFromFeed(hide: boolean): PostBuilder {
+    this.hide_from_feed = hide
+    return this
+  }
+
+  /**
    * Create the post request object
    */
   build(): CreatePostRequest {
@@ -126,7 +204,21 @@ export class PostBuilder {
       description: this.description,
       cover_image: this.cover_image,
       postTags: this.postTags,
-      is_published: this.is_published
+      is_published: this.is_published,
+      
+      // SEO and Social Media
+      search_engine_title: this.search_engine_title,
+      search_engine_description: this.search_engine_description,
+      social_title: this.social_title,
+      
+      // Section
+      section_id: this.section_id,
+      
+      // Advanced Settings
+      write_comment_permissions: this.write_comment_permissions,
+      default_comment_sort: this.default_comment_sort,
+      explicit: this.explicit,
+      hide_from_feed: this.hide_from_feed
     }
   }
 

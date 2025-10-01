@@ -13,7 +13,13 @@
 - ✅ **Delete drafts** (`DELETE /api/v1/drafts/{id}`)
 - ✅ **List drafts** (`GET /api/v1/post_management/drafts`)
 - ✅ **HTML to Substack JSON conversion** (internal format for `draft_body`)
-- ✅ **Metadata support**: `cover_image`, `description`, `draft_section_id`, `section_chosen`
+- ✅ **Complete Metadata Support** (verified against Python implementation + sample posts):
+  - SEO: `search_engine_title`, `search_engine_description`
+  - Social Media: `social_title`, `cover_image`, `description`
+  - Comments: `write_comment_permissions`, `default_comment_sort`
+  - Organization: `section_id`, `postTags`
+  - Advanced: `explicit`, `hide_from_feed`, `meter_type`, `editor_v2`, `show_guest_bios`, and more
+  - See [METADATA_EXAMPLE.ts](./METADATA_EXAMPLE.ts) for complete list
 
 ### Content Format
 The API requires `draft_body` to be a **stringified JSON** in Substack's internal document format:

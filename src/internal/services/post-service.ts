@@ -198,15 +198,39 @@ export class PostService {
       const bodyJson = this.htmlToSubstackJson(postData.body_html || '')
       
       const updatePayload = {
+        // Basic content
         draft_title: postData.title,
         draft_subtitle: postData.subtitle,
         draft_body: JSON.stringify(bodyJson), // Must be stringified JSON!
         type: postData.type || 'newsletter',
         audience: postData.audience || 'everyone',
+        
+        // Editor and structure
+        editor_v2: postData.editor_v2 ?? true, // Use modern editor by default
+        subscriber_set_id: 1, // Default subscriber set
+        should_send_email: true, // For publishing
+        
+        // SEO and Social Media
         description: postData.description,
         cover_image: postData.cover_image,
+        search_engine_title: postData.search_engine_title,
+        search_engine_description: postData.search_engine_description,
+        social_title: postData.social_title,
+        
+        // Section
         draft_section_id: postData.section_id,
-        section_chosen: !!postData.section_id
+        section_chosen: !!postData.section_id,
+        
+        // Advanced settings
+        free_unlock_required: postData.free_unlock_required ?? false,
+        exempt_from_archive_paywall: postData.exempt_from_archive_paywall ?? false,
+        explicit: postData.explicit ?? false,
+        meter_type: postData.meter_type ?? null,
+        hide_from_feed: postData.hide_from_feed ?? false,
+        should_send_free_preview: postData.should_send_free_preview ?? false,
+        show_guest_bios: postData.show_guest_bios ?? false,
+        write_comment_permissions: postData.write_comment_permissions || 'everyone',
+        default_comment_sort: postData.default_comment_sort || 'best_first'
       }
 
       // Use a proper PUT request
@@ -272,17 +296,37 @@ export class PostService {
     // Convert HTML to Substack's JSON format
     const bodyJson = updateData.body_html ? this.htmlToSubstackJson(updateData.body_html) : undefined
     
-    // Use PUT to update the draft
+    // Use PUT to update the draft - include all metadata
     const updatePayload = {
+      // Basic content
       draft_title: updateData.title,
       draft_subtitle: updateData.subtitle,
       draft_body: bodyJson ? JSON.stringify(bodyJson) : undefined, // Must be stringified JSON!
       type: updateData.type,
       audience: updateData.audience,
-      cover_image: updateData.cover_image,
+      
+      // SEO and Social Media
       description: updateData.description,
+      cover_image: updateData.cover_image,
+      search_engine_title: updateData.search_engine_title,
+      search_engine_description: updateData.search_engine_description,
+      social_title: updateData.social_title,
+      
+      // Section
       draft_section_id: updateData.section_id,
-      section_chosen: !!updateData.section_id
+      section_chosen: !!updateData.section_id,
+      
+      // Advanced settings (only if provided)
+      ...(updateData.editor_v2 !== undefined && { editor_v2: updateData.editor_v2 }),
+      ...(updateData.free_unlock_required !== undefined && { free_unlock_required: updateData.free_unlock_required }),
+      ...(updateData.exempt_from_archive_paywall !== undefined && { exempt_from_archive_paywall: updateData.exempt_from_archive_paywall }),
+      ...(updateData.explicit !== undefined && { explicit: updateData.explicit }),
+      ...(updateData.meter_type !== undefined && { meter_type: updateData.meter_type }),
+      ...(updateData.hide_from_feed !== undefined && { hide_from_feed: updateData.hide_from_feed }),
+      ...(updateData.should_send_free_preview !== undefined && { should_send_free_preview: updateData.should_send_free_preview }),
+      ...(updateData.show_guest_bios !== undefined && { show_guest_bios: updateData.show_guest_bios }),
+      ...(updateData.write_comment_permissions && { write_comment_permissions: updateData.write_comment_permissions }),
+      ...(updateData.default_comment_sort && { default_comment_sort: updateData.default_comment_sort })
     }
 
     const response = await this.httpClient.request<any>(
