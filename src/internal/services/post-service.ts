@@ -204,7 +204,9 @@ export class PostService {
         type: postData.type || 'newsletter',
         audience: postData.audience || 'everyone',
         description: postData.description,
-        cover_image: postData.cover_image
+        cover_image: postData.cover_image,
+        draft_section_id: postData.section_id,
+        section_chosen: !!postData.section_id
       }
 
       // Use a proper PUT request
@@ -276,7 +278,11 @@ export class PostService {
       draft_subtitle: updateData.subtitle,
       draft_body: bodyJson ? JSON.stringify(bodyJson) : undefined, // Must be stringified JSON!
       type: updateData.type,
-      audience: updateData.audience
+      audience: updateData.audience,
+      cover_image: updateData.cover_image,
+      description: updateData.description,
+      draft_section_id: updateData.section_id,
+      section_chosen: !!updateData.section_id
     }
 
     const response = await this.httpClient.request<any>(
@@ -310,25 +316,41 @@ export class PostService {
   /**
    * Publish a draft
    * @param postId - The draft ID to publish
-   * @param options - Publishing options
+   * @param options - Publishing options (section_id defaults to Whiskey & Flowers 🌸)
    * @returns Promise<CreatePostResponse> - The published post data
    * @throws {Error} When publishing fails
    * 
-   * TODO: Find the actual publish endpoint - might be /api/v1/drafts/{id}/publish
+   * ⚠️ STATUS: Partially working - Returns 400 Bad Request
+   * The endpoint exists but may require additional fields not yet documented.
+   * The UI confirmation dialog ("Send via email?") likely handles extra logic.
+   * 
+   * WORKAROUND: Create drafts via API (works perfectly), then publish manually via UI.
+   * Drafts render identically to manually created posts with all formatting preserved.
+   * 
+   * Default section: Whiskey & Flowers 🌸 (ID: 194500)
    */
   async publishPost(postId: number, options: PublishPostRequest = {}): Promise<CreatePostResponse> {
-    // Try the publish endpoint
+    // Default to "Whiskey & Flowers 🌸" section if not provided
+    const publishPayload = {
+      section_id: options.section_id || 194500, // Default: Whiskey & Flowers 🌸
+      send_email: options.send_email ?? false,  // Default to false to avoid accidental emails
+      audience: options.audience || 'everyone',
+      comments_enabled: options.comments_enabled ?? true,
+      ...options
+    }
+
     try {
       const response = await this.httpClient.post<any>(
         `/api/v1/drafts/${postId}/publish`,
-        options
+        publishPayload
       )
       
       return this.transformToPostResponse(response)
     } catch (error) {
       throw new Error(
         `Failed to publish post ${postId}. ` +
-        `The publish endpoint may require investigation. ` +
+        `The API publish endpoint needs investigation (see PUBLISH_API_STATUS.md). ` +
+        `Workaround: Edit at https://yourpublication.substack.com/publish/post/${postId} ` +
         `Error: ${(error as Error).message}`
       )
     }

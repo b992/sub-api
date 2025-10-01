@@ -1,4 +1,4 @@
-import type { SubstackPost, SubstackFullPost } from '../internal'
+import type { SubstackPost, SubstackFullPost, PublishPostRequest } from '../internal'
 import type { HttpClient } from '../internal/http-client'
 import type { CommentService, PostService } from '../internal/services'
 import { Comment } from './comment'
@@ -133,11 +133,7 @@ export class PreviewPost {
    * @returns Promise<FullPost> - The published post
    * @throws {Error} When post publishing fails or user lacks permission
    */
-  async publish(options: {
-    send_email?: boolean
-    email_subject?: string
-    trigger_at?: string // For scheduling
-  } = {}): Promise<FullPost> {
+  async publish(options: PublishPostRequest = {}): Promise<FullPost> {
     const publishedPost = await this.postService.publishPost(this.id, options)
     
     // Transform the response to match SubstackFullPost format

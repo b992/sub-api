@@ -2,6 +2,12 @@
 
 ## 🎉 Successfully Updated PostService with Working Draft APIs!
 
+> **📋 Latest Status**: See [PUBLISH_API_STATUS.md](./PUBLISH_API_STATUS.md) for current implementation status.
+> - ✅ Draft creation: **Fully working**
+> - ✅ HTML to Substack JSON: **Working perfectly**
+> - ⚠️ API Publishing: **Partially working** (use UI for now)
+> - **Default Section**: Whiskey & Flowers 🌸 (ID: 194500)
+
 ### What Changed
 
 The `PostService` class has been updated from throwing errors on post creation to using the **working draft API endpoints** discovered through Chrome DevTools investigation.

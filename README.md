@@ -28,9 +28,27 @@ for await (const post of profile.posts({ limit: 5 })) {
   console.log(`📄 "${post.title}" - ${post.publishedAt?.toLocaleDateString()}`);
 }
 
+// Create a draft post with perfect formatting ✅
+const draft = await profile.newPost()
+  .setTitle('My Post')
+  .setBodyHtml('<h2>Title</h2><p>Content here</p>')
+  .setDescription('SEO description')
+  .createDraft();
+console.log(`Draft created! Edit at: yoursite.substack.com/publish/post/${draft.id}`);
+
 // Test connectivity
 const isConnected = await client.testConnectivity();
 ```
+
+## ✨ Features
+
+- 📝 **Draft Creation** - Create posts with HTML content, metadata, and perfect formatting ✅
+- 🔍 **Content Discovery** - Fetch posts, notes, comments with full metadata ✅
+- 👤 **Profile Management** - Get profile info, followers, following ✅
+- 💬 **Notes & Comments** - Create notes with links, manage comments ✅
+- ⚠️ **Publishing** - API publishing partially working, use UI for now ([details](PUBLISH_API_STATUS.md))
+
+> 📌 **Default Section**: Posts default to "Whiskey & Flowers 🌸" (ID: 194500)
 
 ## Documentation
 
@@ -41,6 +59,8 @@ const isConnected = await client.testConnectivity();
 - [API Reference](docs/api-reference.md) - Complete method documentation
 - [Entity Model](docs/entity-model.md) - Modern object-oriented API
 - [Examples](docs/examples.md) - Real-world usage patterns
+- [Post Creation Example](EXAMPLE_POST_CREATION.ts) - Full workflow demo
+- [Publish API Status](PUBLISH_API_STATUS.md) - Current implementation status
 
 ## License
 

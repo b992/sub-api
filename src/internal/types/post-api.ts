@@ -43,9 +43,14 @@ export interface UpdatePostRequest extends Partial<CreatePostRequest> {
 }
 
 export interface PublishPostRequest {
+  section_id?: number // Section to publish to (required for some publications)
   send_email?: boolean
   email_subject?: string
   trigger_at?: string // For scheduling
+  audience?: 'everyone' | 'paid' | 'founding'
+  comments_enabled?: boolean
+  social_preview_image?: string
+  tags?: string[]
 }
 
 export interface PostDraftInfo {
