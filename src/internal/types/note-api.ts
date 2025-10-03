@@ -52,7 +52,7 @@ export interface PublishNoteRequest {
 
 export interface CreateAttachmentRequest {
   url: string
-  type: 'link'
+  type: 'link' | 'image'
 }
 
 export interface CreateAttachmentResponse {
@@ -60,6 +60,14 @@ export interface CreateAttachmentResponse {
   type: string
   publication: any
   post: any
+}
+
+export interface ImageUploadRequest {
+  image: string // Base64 data URI: "data:image/png;base64,..."
+}
+
+export interface ImageUploadResponse {
+  url: string // S3 URL: "https://substack-post-media.s3.amazonaws.com/public/images/..."
 }
 
 export interface PublishNoteResponse {

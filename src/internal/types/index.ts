@@ -31,7 +31,9 @@ export type {
   PublishNoteRequest,
   PublishNoteResponse,
   CreateAttachmentRequest,
-  CreateAttachmentResponse
+  CreateAttachmentResponse,
+  ImageUploadRequest,
+  ImageUploadResponse
 } from './note-api'
 
 export type {

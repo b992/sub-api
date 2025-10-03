@@ -428,20 +428,18 @@ app.delete('/api/posts/:id', async (req: Request, res: Response) => {
 /**
  * POST /api/notes/publish
  * 
- * Publish a note (microblog post) with optional link attachment
+ * Publish a note (microblog post) with optional link or image attachments
  * 
  * Body:
  * {
  *   "content": "Text content of the note",
- *   "linkUrl": "https://example.com"  // Optional link attachment
+ *   "linkUrl": "https://example.com",  // Optional link attachment
+ *   "images": ["data:image/png;base64,...", ...]  // Optional image attachments (base64 data URIs)
  * }
- * 
- * Note: Substack Notes API doesn't support inline images.
- * Images can only be shared as link attachments.
  */
 app.post('/api/notes/publish', async (req: Request, res: Response) => {
   try {
-    const { content, linkUrl } = req.body
+    const { content, linkUrl, images } = req.body
 
     if (!content) {
       return res.status(400).json({ 
@@ -451,8 +449,15 @@ app.post('/api/notes/publish', async (req: Request, res: Response) => {
 
     const profile = await getClient().ownProfile()
     
-    // Use NoteWithLinkBuilder if link is provided, otherwise regular NoteBuilder
-    const builder = linkUrl ? profile.newNoteWithLink(linkUrl) : profile.newNote()
+    // Choose the right builder based on attachments
+    let builder
+    if (images && Array.isArray(images) && images.length > 0) {
+      builder = profile.newNoteWithImages(images)
+    } else if (linkUrl) {
+      builder = profile.newNoteWithLink(linkUrl)
+    } else {
+      builder = profile.newNote()
+    }
 
     // Split content into paragraphs (if it has line breaks)
     const paragraphs = content.split('\n\n').filter((p: string) => p.trim())
@@ -475,7 +480,9 @@ app.post('/api/notes/publish', async (req: Request, res: Response) => {
       success: true,
       note: {
         id: note.id,
-        hasLink: !!linkUrl
+        hasLink: !!linkUrl,
+        hasImages: !!(images && images.length > 0),
+        imageCount: images ? images.length : 0
       }
     })
   } catch (error) {

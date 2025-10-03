@@ -6,6 +6,7 @@ export { Comment } from './comment'
 export {
   NoteBuilder,
   NoteWithLinkBuilder,
+  NoteWithImagesBuilder,
   ParagraphBuilder,
   ListBuilder,
   ListItemBuilder

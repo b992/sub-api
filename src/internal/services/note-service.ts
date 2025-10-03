@@ -1,4 +1,11 @@
-import type { SubstackNote, PaginatedSubstackNotes } from '../types'
+import type { 
+  SubstackNote, 
+  PaginatedSubstackNotes,
+  ImageUploadRequest,
+  ImageUploadResponse,
+  CreateAttachmentRequest,
+  CreateAttachmentResponse
+} from '../types'
 import { SubstackCommentResponseCodec } from '../types'
 import { decodeOrThrow } from '../validation'
 import type { HttpClient } from '../http-client'
@@ -144,5 +151,45 @@ export class NoteService {
       notes: response.items || [],
       nextCursor: response.nextCursor
     }
+  }
+
+  /**
+   * Upload an image to Substack's S3 storage
+   * @param base64Image - Base64 data URI (e.g., "data:image/png;base64,...")
+   * @returns Promise<string> - S3 URL of the uploaded image
+   * @throws {Error} When image upload fails
+   */
+  async uploadImage(base64Image: string): Promise<string> {
+    const request: ImageUploadRequest = {
+      image: base64Image
+    }
+
+    const response = await this.httpClient.post<ImageUploadResponse>(
+      '/api/v1/image',
+      request
+    )
+
+    return response.url
+  }
+
+  /**
+   * Create an attachment (link or image) for a note
+   * @param url - URL of the attachment (external link or S3 image URL)
+   * @param type - Type of attachment ('link' or 'image')
+   * @returns Promise<string> - Attachment ID
+   * @throws {Error} When attachment creation fails
+   */
+  async createAttachment(url: string, type: 'link' | 'image'): Promise<string> {
+    const request: CreateAttachmentRequest = {
+      url,
+      type
+    }
+
+    const response = await this.httpClient.post<CreateAttachmentResponse>(
+      '/api/v1/comment/attachment',
+      request
+    )
+
+    return response.id
   }
 }

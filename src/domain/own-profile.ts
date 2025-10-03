@@ -1,6 +1,6 @@
 import { Profile } from './profile'
 import { Note } from './note'
-import { NoteBuilder, NoteWithLinkBuilder } from './note-builder'
+import { NoteBuilder, NoteWithLinkBuilder, NoteWithImagesBuilder } from './note-builder'
 import { FullPost } from './post'
 import { PostBuilder } from './post-builder'
 import type { SubstackFullProfile } from '../internal'
@@ -53,6 +53,14 @@ export class OwnProfile extends Profile {
    */
   newNoteWithLink(link: string): NoteWithLinkBuilder {
     return new NoteWithLinkBuilder(this.client, link)
+  }
+
+  /**
+   * Create a new note with image attachments using the builder pattern
+   * @param base64Images - Array of base64 encoded images (data URIs)
+   */
+  newNoteWithImages(base64Images: string[]): NoteWithImagesBuilder {
+    return new NoteWithImagesBuilder(this.client, this.noteService, base64Images)
   }
 
   /**

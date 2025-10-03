@@ -5,6 +5,7 @@ import {
   CreateAttachmentResponse
 } from '../internal'
 import { HttpClient } from '../internal/http-client'
+import { NoteService } from '../internal/services'
 
 interface TextSegment {
   text: string
@@ -496,6 +497,133 @@ export class NoteWithLinkBuilder extends NoteBuilder {
     const request = this.toNoteRequestWithState(updatedState)
 
     // Publish the note with attachment
+    return this.client.post<PublishNoteResponse>('/api/v1/comment/feed', request)
+  }
+
+  /**
+   * Convert the builder's content to Substack's note format with custom state
+   */
+  private toNoteRequestWithState(state: NoteBuilderState): PublishNoteRequest {
+    // Validation: must have at least one paragraph
+    if (state.paragraphs.length === 0) {
+      throw new Error('Note must contain at least one paragraph')
+    }
+
+    // Validation: each paragraph must have content
+    for (const paragraph of state.paragraphs) {
+      if (paragraph.segments.length === 0 && paragraph.lists.length === 0) {
+        throw new Error('Each paragraph must contain at least one content block')
+      }
+    }
+
+    const content = state.paragraphs.flatMap((paragraph) => {
+      const elements = []
+
+      // Add paragraph content if it has segments
+      if (paragraph.segments.length > 0) {
+        elements.push({
+          type: 'paragraph' as const,
+          content: paragraph.segments.map((segment) => this.segmentToContent(segment))
+        })
+      }
+
+      // Add list content
+      for (const list of paragraph.lists) {
+        elements.push({
+          type: list.type === 'bullet' ? ('bulletList' as const) : ('orderedList' as const),
+          content: list.items.map((item) => ({
+            type: 'listItem' as const,
+            content: [
+              {
+                type: 'paragraph' as const,
+                content: item.segments.map((segment) => this.segmentToContent(segment))
+              }
+            ]
+          }))
+        })
+      }
+
+      return elements
+    })
+
+    const request: PublishNoteRequest = {
+      bodyJson: {
+        type: 'doc',
+        attrs: {
+          schemaVersion: 'v1'
+        },
+        content
+      },
+      tabId: 'for-you',
+      surface: 'feed',
+      replyMinimumRole: 'everyone'
+    }
+
+    if (state.attachmentIds && state.attachmentIds.length > 0) {
+      request.attachmentIds = state.attachmentIds
+    }
+
+    return request
+  }
+}
+
+/**
+ * Extended NoteBuilder that uploads images and creates attachments
+ */
+export class NoteWithImagesBuilder extends NoteBuilder {
+  constructor(
+    client: HttpClient,
+    private readonly noteService: NoteService,
+    private readonly base64Images: string[]
+  ) {
+    super(client)
+  }
+
+  /**
+   * Add a paragraph to the note (used by ParagraphBuilder) - returns NoteWithImagesBuilder to preserve image logic
+   */
+  addParagraph(paragraph: { segments: TextSegment[]; lists: List[] }): NoteWithImagesBuilder {
+    return new NoteWithImagesBuilder(this.client, this.noteService, this.base64Images).copyState({
+      paragraphs: [...this.state.paragraphs, paragraph],
+      attachmentIds: this.state.attachmentIds
+    })
+  }
+
+  /**
+   * Copy state to new instance - helper method
+   */
+  private copyState(state: NoteBuilderState): NoteWithImagesBuilder {
+    const newBuilder = new NoteWithImagesBuilder(this.client, this.noteService, this.base64Images)
+    ;(newBuilder as any).state = state
+    return newBuilder
+  }
+
+  /**
+   * Publish the note with image attachments
+   */
+  async publish(): Promise<PublishNoteResponse> {
+    // Upload all images and create attachments
+    const attachmentIds: string[] = []
+
+    for (const base64Image of this.base64Images) {
+      // Step 1: Upload image to S3
+      const imageUrl = await this.noteService.uploadImage(base64Image)
+
+      // Step 2: Create image attachment
+      const attachmentId = await this.noteService.createAttachment(imageUrl, 'image')
+      attachmentIds.push(attachmentId)
+    }
+
+    // Update the state with the attachment IDs
+    const updatedState: NoteBuilderState = {
+      paragraphs: this.state.paragraphs,
+      attachmentIds
+    }
+
+    // Create the request with attachments
+    const request = this.toNoteRequestWithState(updatedState)
+
+    // Publish the note with attachments
     return this.client.post<PublishNoteResponse>('/api/v1/comment/feed', request)
   }
 
