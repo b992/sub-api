@@ -233,15 +233,20 @@ export class PostBuilder {
   }
 
   /**
-   * Create and publish the post immediately
-   * Note: Publishing via API may require additional investigation
+   * Create and publish the post immediately (convenience method)
+   * 
+   * This does two API calls internally:
+   * 1. Creates draft with all content/metadata
+   * 2. Publishes the draft (flips to published state)
+   * 
+   * ✅ WORKING! (Oct 3, 2025)
    */
   async publish(): Promise<CreatePostResponse> {
     const postData = this.build()
-    // First create as draft
+    // First create as draft with all content/metadata
     const draft = await this.postService.createPost(postData)
     
-    // Then attempt to publish it
+    // Then publish it (just flips the state)
     return await this.postService.publishPost(draft.id)
   }
 

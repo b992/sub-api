@@ -26,8 +26,10 @@ export class SubstackClient {
   private readonly commentService: CommentService
   private readonly followeeService: FolloweeService
   private readonly connectivityService: ConnectivityService
+  private readonly config: SubstackConfig
 
   constructor(config: SubstackConfig) {
+    this.config = config
     // Create HTTP client for publication-specific endpoints
     const protocol = config.protocol || 'https'
     const publicationBaseUrl = `${protocol}://${config.hostname || 'substack.com'}`
@@ -84,6 +86,7 @@ export class SubstackClient {
         this.noteService,
         this.commentService,
         this.followeeService,
+        this.config.defaultSectionId,  // Pass default section ID from config
         resolvedSlug,
         this.slugService.getSlugForUserId.bind(this.slugService)
       )

@@ -225,7 +225,7 @@ export class PostService {
         free_unlock_required: postData.free_unlock_required ?? false,
         exempt_from_archive_paywall: postData.exempt_from_archive_paywall ?? false,
         explicit: postData.explicit ?? false,
-        meter_type: postData.meter_type ?? null,
+        meter_type: postData.meter_type || 'none', // Must be string, not null!
         hide_from_feed: postData.hide_from_feed ?? false,
         should_send_free_preview: postData.should_send_free_preview ?? false,
         show_guest_bios: postData.show_guest_bios ?? false,
@@ -321,7 +321,7 @@ export class PostService {
       ...(updateData.free_unlock_required !== undefined && { free_unlock_required: updateData.free_unlock_required }),
       ...(updateData.exempt_from_archive_paywall !== undefined && { exempt_from_archive_paywall: updateData.exempt_from_archive_paywall }),
       ...(updateData.explicit !== undefined && { explicit: updateData.explicit }),
-      ...(updateData.meter_type !== undefined && { meter_type: updateData.meter_type }),
+      ...(updateData.meter_type && { meter_type: updateData.meter_type }),
       ...(updateData.hide_from_feed !== undefined && { hide_from_feed: updateData.hide_from_feed }),
       ...(updateData.should_send_free_preview !== undefined && { should_send_free_preview: updateData.should_send_free_preview }),
       ...(updateData.show_guest_bios !== undefined && { show_guest_bios: updateData.show_guest_bios }),
@@ -360,44 +360,32 @@ export class PostService {
   /**
    * Publish a draft
    * @param postId - The draft ID to publish
-   * @param options - Publishing options (section_id defaults to Whiskey & Flowers 🌸)
+   * @param options - Publishing options
    * @returns Promise<CreatePostResponse> - The published post data
    * @throws {Error} When publishing fails
    * 
-   * ⚠️ STATUS: Partially working - Returns 400 Bad Request
-   * The endpoint exists but may require additional fields not yet documented.
-   * The UI confirmation dialog ("Send via email?") likely handles extra logic.
+   * ✅ STATUS: WORKING! (Discovered Oct 3, 2025)
+   * The publish endpoint is incredibly simple - just one parameter: `send` (boolean)
+   * All content, metadata, section, etc. must be set in the draft BEFORE publishing.
+   * Publishing is just a state flip: draft → published
    * 
-   * WORKAROUND: Create drafts via API (works perfectly), then publish manually via UI.
-   * Drafts render identically to manually created posts with all formatting preserved.
-   * 
-   * Default section: Whiskey & Flowers 🌸 (ID: 194500)
+   * Key insight: All draft data is already saved via PUT /api/v1/drafts/{id}
+   * The publish call only needs to know whether to send email or not.
    */
   async publishPost(postId: number, options: PublishPostRequest = {}): Promise<CreatePostResponse> {
-    // Default to "Whiskey & Flowers 🌸" section if not provided
+    // The payload is minimal - just whether to send email
+    // All other data (section_id, audience, metadata, etc.) must be set in the draft first!
+    // ⚠️ IMPORTANT: section_id MUST be set in draft or publish will fail with 400!
     const publishPayload = {
-      section_id: options.section_id || 194500, // Default: Whiskey & Flowers 🌸
-      send_email: options.send_email ?? false,  // Default to false to avoid accidental emails
-      audience: options.audience || 'everyone',
-      comments_enabled: options.comments_enabled ?? true,
-      ...options
+      send: options.send_email ?? false  // true = send email, false = just publish
     }
 
-    try {
-      const response = await this.httpClient.post<any>(
-        `/api/v1/drafts/${postId}/publish`,
-        publishPayload
-      )
-      
-      return this.transformToPostResponse(response)
-    } catch (error) {
-      throw new Error(
-        `Failed to publish post ${postId}. ` +
-        `The API publish endpoint needs investigation (see PUBLISH_API_STATUS.md). ` +
-        `Workaround: Edit at https://yourpublication.substack.com/publish/post/${postId} ` +
-        `Error: ${(error as Error).message}`
-      )
-    }
+    const response = await this.httpClient.post<any>(
+      `/api/v1/drafts/${postId}/publish`,
+      publishPayload
+    )
+    
+    return this.transformToPostResponse(response)
   }
 
   /**

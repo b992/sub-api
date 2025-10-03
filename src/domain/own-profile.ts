@@ -25,6 +25,7 @@ export class OwnProfile extends Profile {
     noteService: NoteService,
     commentService: CommentService,
     private readonly followeeService: FolloweeService,
+    private readonly defaultSectionId?: number,
     resolvedSlug?: string,
     slugResolver?: (userId: number, fallbackHandle?: string) => Promise<string | undefined>
   ) {
@@ -58,7 +59,12 @@ export class OwnProfile extends Profile {
    * Create a new post builder that can be used to construct and create a post
    */
   newPost(): PostBuilder {
-    return new PostBuilder(this.client, this.postService)
+    const builder = new PostBuilder(this.client, this.postService)
+    // Auto-set default section if configured
+    if (this.defaultSectionId) {
+      builder.setSection(this.defaultSectionId)
+    }
+    return builder
   }
 
   /**

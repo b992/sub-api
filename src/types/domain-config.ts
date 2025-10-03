@@ -10,6 +10,7 @@ export interface SubstackConfig {
   cacheTTL?: number // Cache TTL in seconds (default: 300)
   protocol?: 'http' | 'https' // Protocol to use (default: 'https')
   substackBaseUrl?: string // Base URL for global Substack endpoints (default: 'https://substack.com')
+  defaultSectionId?: number // Default section ID for publishing posts (optional, can be overridden per-post)
 }
 
 export interface PaginationParams {

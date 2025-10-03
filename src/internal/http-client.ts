@@ -35,7 +35,17 @@ export class HttpClient {
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      // Try to get error details from response body
+      let errorDetails = response.statusText
+      try {
+        const errorBody = await response.text()
+        if (errorBody) {
+          errorDetails = errorBody
+        }
+      } catch {
+        // Ignore if we can't read the body
+      }
+      throw new Error(`HTTP ${response.status}: ${errorDetails}`)
     }
 
     return response.json()
