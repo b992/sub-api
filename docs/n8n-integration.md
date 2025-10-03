@@ -1,8 +1,6 @@
-# n8n Integration Guide 🎯
+# n8n Integration Guide
 
-**Direct integration** - No HTTP server needed! Use the Substack client library directly in n8n Code nodes.
-
----
+Direct integration guide for using the Substack API client in n8n workflows - no HTTP server needed!
 
 ## Why No Server Needed?
 
@@ -14,13 +12,11 @@ n8n runs **Node.js natively**, so you can:
 
 **The HTTP server is only needed for non-Node.js integrations!**
 
----
-
-## Setup on Your Ubuntu Server
+## Setup
 
 ### 1. Install the Package
 
-SSH into your Ubuntu server where n8n is running:
+SSH into your server where n8n is running:
 
 ```bash
 # Navigate to n8n's node_modules
@@ -28,9 +24,6 @@ cd ~/.n8n/nodes
 # Or wherever your n8n stores custom packages
 
 # Install the package
-npm install /path/to/substack-api
-
-# Or if published to npm:
 npm install substack-api
 ```
 
@@ -47,9 +40,7 @@ try {
 }
 ```
 
----
-
-## n8n Credential Setup
+## Credential Setup
 
 ### Option 1: Environment Variables (Recommended)
 
@@ -57,7 +48,7 @@ Add to your n8n environment (e.g., `~/.n8n/.env` or systemd service):
 
 ```bash
 SUBSTACK_API_KEY=s%3Ayour-connect-sid-cookie
-SUBSTACK_HOSTNAME=whiskeyandflowers.substack.com
+SUBSTACK_HOSTNAME=yourpub.substack.com
 SUBSTACK_DEFAULT_SECTION_ID=162170
 ```
 
@@ -98,57 +89,34 @@ const client = new SubstackClient({
 });
 ```
 
----
+## Workflow Examples
 
-## Complete Workflow Examples
+### 1. Publish a Post
 
-### 1. Publish a Poem
+**Workflow:** `[Schedule] → [Format Content] → [Code: Publish] → [Notify]`
 
-**Workflow:** `[Schedule] → [Format Poem] → [Code: Publish] → [Notify]`
-
-#### Node 1: Schedule Trigger
-- Runs daily at 8am
-
-#### Node 2: Function Node - Format Poem
-```javascript
-// Get poem from wherever (API, database, etc.)
-return [{
-  json: {
-    title: "Morning Reflections",
-    content: `
-      <h2>Dawn breaks softly</h2>
-      <p><em>Coffee steams, thoughts wander<br>
-      Another day begins</em></p>
-    `,
-    subtitle: "A morning haiku",
-    tags: ["poetry", "morning"]
-  }
-}];
-```
-
-#### Node 3: Code Node - Publish to Substack
 ```javascript
 const { SubstackClient } = require('substack-api');
 
-// Get formatted poem from previous node
-const poem = $input.first().json;
+// Get content from previous node
+const content = $input.first().json;
 
 // Initialize client
 const client = new SubstackClient({
   apiKey: process.env.SUBSTACK_API_KEY,
   hostname: process.env.SUBSTACK_HOSTNAME,
-  defaultSectionId: 162170  // Raw Thoughts section
+  defaultSectionId: 162170
 });
 
 try {
-  // Publish the poem
+  // Publish the post
   const profile = await client.ownProfile();
   const published = await profile.newPost()
-    .setTitle(poem.title)
-    .setBodyHtml(poem.content)
-    .setSubtitle(poem.subtitle)
-    .setDescription(`A poem: ${poem.title}`)
-    .setSocialTitle(`📝 ${poem.title}`)
+    .setTitle(content.title)
+    .setBodyHtml(content.body)
+    .setSubtitle(content.subtitle)
+    .setDescription(`Article: ${content.title}`)
+    .setSocialTitle(`📝 ${content.title}`)
     .publish();
 
   // Return success with post details
@@ -172,53 +140,29 @@ try {
 }
 ```
 
-#### Node 4: Send Notification
-Send email/Slack/Discord notification with the published URL.
+### 2. Publish from AI-Generated Content
 
----
+**Workflow:** `[Webhook: Topic] → [OpenAI: Generate] → [Code: Publish] → [Response]`
 
-### 2. Publish from Image + AI-Generated Story
-
-**Workflow:** `[Webhook: Image Upload] → [OpenAI: Generate Story] → [Code: Publish] → [Response]`
-
-#### Node 1: Webhook Trigger
-Receives image URL from your app/service
-
-#### Node 2: OpenAI Node
-Generate a story based on the image
-
-#### Node 3: Code Node - Publish with Image
 ```javascript
 const { SubstackClient } = require('substack-api');
 
-// Get data from previous nodes
-const imageUrl = $('Webhook').first().json.imageUrl;
-const story = $('OpenAI').first().json.story;
-const title = $('OpenAI').first().json.title;
+// Get AI-generated content
+const aiContent = $('OpenAI').first().json;
 
-// Initialize client
 const client = new SubstackClient({
   apiKey: process.env.SUBSTACK_API_KEY,
   hostname: process.env.SUBSTACK_HOSTNAME,
-  defaultSectionId: 158717  // The Broken Winds section
+  defaultSectionId: 158717
 });
-
-// Format content with image
-const content = `
-  <div class="cover-image">
-    <img src="${imageUrl}" alt="${title}" />
-  </div>
-  <h2>The Story</h2>
-  ${story}
-`;
 
 // Publish
 const profile = await client.ownProfile();
 const published = await profile.newPost()
-  .setTitle(title)
-  .setBodyHtml(content)
-  .setCoverImage(imageUrl)
-  .setDescription('An AI-generated story based on an image')
+  .setTitle(aiContent.title)
+  .setBodyHtml(aiContent.body)
+  .setCoverImage(aiContent.imageUrl)
+  .setDescription('AI-generated content')
   .publish();
 
 return [{
@@ -229,16 +173,14 @@ return [{
 }];
 ```
 
----
-
-### 3. Publish a Quick Note (Microblog)
+### 3. Publish a Quick Note
 
 **Workflow:** `[RSS Feed] → [Filter: Interesting] → [Code: Post as Note]`
 
 ```javascript
 const { SubstackClient } = require('substack-api');
 
-// Get RSS item from previous node
+// Get RSS item
 const item = $input.first().json;
 
 const client = new SubstackClient({
@@ -263,11 +205,7 @@ return [{
 }];
 ```
 
----
-
 ### 4. Multi-Publication Workflow
-
-**Workflow:** `[Schedule] → [Code: Publish to Multiple Pubs]`
 
 ```javascript
 const { SubstackClient } = require('substack-api');
@@ -277,7 +215,7 @@ const publications = [
   {
     name: 'Poetry',
     apiKey: process.env.POETRY_API_KEY,
-    hostname: 'whiskeyandflowers.substack.com',
+    hostname: 'mypoetry.substack.com',
     sectionId: 162170
   },
   {
@@ -288,10 +226,10 @@ const publications = [
   }
 ];
 
-// Content to publish (same to all pubs)
+// Content to publish
 const content = {
   title: 'Cross-Posted Article',
-  body: '<h2>Hello!</h2><p>This is published to multiple pubs</p>',
+  body: '<h2>Hello!</h2><p>Published to multiple pubs</p>',
   subtitle: 'A cross-publication post'
 };
 
@@ -330,15 +268,11 @@ for (const pub of publications) {
 return [{ json: { results } }];
 ```
 
----
-
 ## Advanced Patterns
 
 ### Error Handling with Retry
 
 ```javascript
-const { SubstackClient } = require('substack-api');
-
 async function publishWithRetry(data, maxRetries = 3) {
   const client = new SubstackClient({
     apiKey: process.env.SUBSTACK_API_KEY,
@@ -374,18 +308,16 @@ return [{ json: result }];
 ### Conditional Section Selection
 
 ```javascript
-const { SubstackClient } = require('substack-api');
-
 const post = $input.first().json;
 
 // Determine section based on tags
 let sectionId;
 if (post.tags.includes('poetry')) {
-  sectionId = 162170;  // Raw Thoughts
-} else if (post.tags.includes('flowers')) {
-  sectionId = 194500;  // Whiskey & Flowers
+  sectionId = 162170;
+} else if (post.tags.includes('tech')) {
+  sectionId = 194500;
 } else {
-  sectionId = 158717;  // The Broken Winds
+  sectionId = 158717;  // default
 }
 
 const client = new SubstackClient({
@@ -402,41 +334,6 @@ const published = await profile.newPost()
 
 return [{ json: { postId: published.id, section: sectionId } }];
 ```
-
-### Draft First, Then Publish
-
-```javascript
-const { SubstackClient } = require('substack-api');
-
-const content = $input.first().json;
-
-const client = new SubstackClient({
-  apiKey: process.env.SUBSTACK_API_KEY,
-  hostname: process.env.SUBSTACK_HOSTNAME,
-  defaultSectionId: 162170
-});
-
-const profile = await client.ownProfile();
-
-// Create as draft first
-const draft = await profile.newPost()
-  .setTitle(content.title)
-  .setBodyHtml(content.body)
-  .saveDraft();
-
-// Wait for review (human approval in workflow?)
-// ... then publish later ...
-
-// Or publish immediately
-const published = await profile.newPost()
-  .setTitle(content.title)
-  .setBodyHtml(content.body)
-  .publish();
-
-return [{ json: { draftId: draft.id, publishedId: published.id } }];
-```
-
----
 
 ## Accessing Previous Node Data
 
@@ -459,18 +356,16 @@ for (const item of allItems) {
 const previousData = $input.first().json;
 ```
 
----
-
 ## Environment Setup on Ubuntu Server
 
-### 1. Add to n8n systemd service
+### Using systemd service
 
 Edit `/etc/systemd/system/n8n.service`:
 
 ```ini
 [Service]
 Environment="SUBSTACK_API_KEY=s%3A..."
-Environment="SUBSTACK_HOSTNAME=whiskeyandflowers.substack.com"
+Environment="SUBSTACK_HOSTNAME=yourpub.substack.com"
 Environment="SUBSTACK_DEFAULT_SECTION_ID=162170"
 ```
 
@@ -480,31 +375,22 @@ sudo systemctl daemon-reload
 sudo systemctl restart n8n
 ```
 
-### 2. Or use .env file
+### Using .env file
 
 Create `~/.n8n/.env`:
 ```bash
 SUBSTACK_API_KEY=s%3A...
-SUBSTACK_HOSTNAME=whiskeyandflowers.substack.com
+SUBSTACK_HOSTNAME=yourpub.substack.com
 SUBSTACK_DEFAULT_SECTION_ID=162170
 ```
 
-Then in n8n startup script:
-```bash
-export $(cat ~/.n8n/.env | xargs)
-n8n start
-```
-
----
-
 ## Testing
 
-### Test in n8n Code Node
+Quick test in n8n Code Node:
 
 ```javascript
 const { SubstackClient } = require('substack-api');
 
-// Quick test
 const client = new SubstackClient({
   apiKey: process.env.SUBSTACK_API_KEY,
   hostname: process.env.SUBSTACK_HOSTNAME,
@@ -522,19 +408,6 @@ return [{
 }];
 ```
 
----
-
-## When to Use the HTTP Server Instead?
-
-Use the HTTP server only if:
-- ❌ You're calling from Python/Ruby/Go (non-Node.js)
-- ❌ You have external webhooks that can't run Node.js
-- ❌ You want a REST API for multiple services
-
-For n8n? **Use the client library directly!** ✅
-
----
-
 ## Benefits of Direct Integration
 
 | Feature | Direct (Client Library) | HTTP Server |
@@ -545,18 +418,18 @@ For n8n? **Use the client library directly!** ✅
 | **Maintenance** | ✅ Just update npm package | 😓 Manage server + package |
 | **n8n Native** | ✅ Full TypeScript support | ❌ HTTP-only |
 
----
-
 ## Summary
 
-✅ **Install** the package on your Ubuntu server  
+✅ **Install** the package on your server  
 ✅ **Use directly** in n8n Code nodes  
 ✅ **Access** all features without HTTP overhead  
 ✅ **Profit!** 🎉
 
 **No HTTP server needed for n8n!** The server is for other languages/tools.
 
----
+## See Also
 
-Need help? Check the examples above or see the main README! 🚀
+- [Configuration Guide](./configuration.md) - Complete configuration options
+- [Examples](./examples.md) - More usage examples
+- [API Reference](./api-reference.md) - Full API documentation
 
