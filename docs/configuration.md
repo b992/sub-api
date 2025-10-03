@@ -1,11 +1,13 @@
 # Configuration Guide
 
-Complete guide for configuring the Substack API client for single and multi-publication setups.
+Complete guide for configuring the Substack API client (Enhanced Fork) for single and multi-publication setups.
+
+> **Note**: This guide is for the enhanced fork at https://github.com/b992/sub-api
 
 ## Quick Start
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 const client = new SubstackClient({
   apiKey: process.env.SUBSTACK_API_KEY!,
@@ -96,7 +98,7 @@ SUBSTACK_DEFAULT_SECTION_ID=123456
 Then use in code:
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 const client = new SubstackClient({
   apiKey: process.env.SUBSTACK_API_KEY!,

@@ -1,6 +1,8 @@
 # n8n Integration Guide
 
-Direct integration guide for using the Substack API client in n8n workflows - no HTTP server needed!
+Direct integration guide for using the Substack API client (Enhanced Fork) in n8n workflows - no HTTP server needed!
+
+> **Note**: This guide uses the enhanced fork from https://github.com/b992/sub-api
 
 ## Why No Server Needed?
 
@@ -19,12 +21,17 @@ n8n runs **Node.js natively**, so you can:
 SSH into your server where n8n is running:
 
 ```bash
-# Navigate to n8n's node_modules
-cd ~/.n8n/nodes
-# Or wherever your n8n stores custom packages
+# Navigate to n8n's node_modules or project directory
+cd ~/.n8n
 
-# Install the package
-npm install substack-api
+# Install from GitHub
+npm install git+https://github.com/b992/sub-api.git
+
+# Or if you have it cloned locally
+npm install ~/sub-api
+
+# Restart n8n
+sudo systemctl restart n8n
 ```
 
 ### 2. Verify Installation
@@ -33,7 +40,7 @@ In n8n, create a test Code node:
 
 ```javascript
 try {
-  const { SubstackClient } = require('substack-api');
+  const { SubstackClient } = require('@b992/substack-api');
   return [{ json: { success: true, message: 'Package loaded!' } }];
 } catch (error) {
   return [{ json: { error: error.message } }];
@@ -55,7 +62,7 @@ SUBSTACK_DEFAULT_SECTION_ID=162170
 Then in n8n Code nodes:
 
 ```javascript
-const { SubstackClient } = require('substack-api');
+const { SubstackClient } = require('@b992/substack-api');
 
 const client = new SubstackClient({
   apiKey: process.env.SUBSTACK_API_KEY,
@@ -78,7 +85,7 @@ Fields:
 Then in Code nodes:
 
 ```javascript
-const { SubstackClient } = require('substack-api');
+const { SubstackClient } = require('@b992/substack-api');
 
 const credentials = $credentials.get('Substack');
 
@@ -96,7 +103,7 @@ const client = new SubstackClient({
 **Workflow:** `[Schedule] → [Format Content] → [Code: Publish] → [Notify]`
 
 ```javascript
-const { SubstackClient } = require('substack-api');
+const { SubstackClient } = require('@b992/substack-api');
 
 // Get content from previous node
 const content = $input.first().json;
@@ -145,7 +152,7 @@ try {
 **Workflow:** `[Webhook: Topic] → [OpenAI: Generate] → [Code: Publish] → [Response]`
 
 ```javascript
-const { SubstackClient } = require('substack-api');
+const { SubstackClient } = require('@b992/substack-api');
 
 // Get AI-generated content
 const aiContent = $('OpenAI').first().json;
@@ -178,7 +185,7 @@ return [{
 **Workflow:** `[RSS Feed] → [Filter: Interesting] → [Code: Post as Note]`
 
 ```javascript
-const { SubstackClient } = require('substack-api');
+const { SubstackClient } = require('@b992/substack-api');
 
 // Get RSS item
 const item = $input.first().json;
@@ -208,7 +215,7 @@ return [{
 ### 4. Multi-Publication Workflow
 
 ```javascript
-const { SubstackClient } = require('substack-api');
+const { SubstackClient } = require('@b992/substack-api');
 
 // Define your publications
 const publications = [
@@ -389,7 +396,7 @@ SUBSTACK_DEFAULT_SECTION_ID=162170
 Quick test in n8n Code Node:
 
 ```javascript
-const { SubstackClient } = require('substack-api');
+const { SubstackClient } = require('@b992/substack-api');
 
 const client = new SubstackClient({
   apiKey: process.env.SUBSTACK_API_KEY,

@@ -1,11 +1,12 @@
-# Substack API Client
+# Substack API Client (Enhanced Fork)
 
-[![npm version](https://badge.fury.io/js/substack-api.svg)](https://badge.fury.io/js/substack-api)
-[![Documentation Status](https://readthedocs.org/projects/substack-api/badge/?version=latest)](https://substack-api.readthedocs.io/en/latest/?badge=latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+[![GitHub](https://img.shields.io/badge/GitHub-b992%2Fsub--api-blue)](https://github.com/b992/sub-api)
 
-A modern, type-safe TypeScript client for the Substack API. Build newsletter automation, content management tools, and subscriber analytics with ease.
+A modern, type-safe TypeScript client for the Substack API. Enhanced fork with multi-publication support, complete metadata handling, and n8n integration. Build newsletter automation, content management tools, and subscriber analytics with ease.
+
+> **Note**: This is an enhanced fork of [jakub-k-slys/substack-api](https://github.com/jakub-k-slys/substack-api) with additional features for multi-publication management and workflow automation.
 
 ## ✨ Features
 
@@ -22,14 +23,35 @@ A modern, type-safe TypeScript client for the Substack API. Build newsletter aut
 
 ### Installation
 
+**Option 1: From GitHub (Recommended)**
 ```bash
-npm install substack-api
+npm install git+https://github.com/b992/sub-api.git
+```
+
+**Option 2: From Local Clone**
+```bash
+# Clone the repository
+git clone https://github.com/b992/sub-api.git
+cd sub-api
+npm install
+npm run build
+
+# Link it globally
+npm link
+
+# In your project
+npm link @b992/substack-api
+```
+
+**Option 3: From npm (if published)**
+```bash
+npm install @b992/substack-api
 ```
 
 ### Basic Usage
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 // Initialize client
 const client = new SubstackClient({
@@ -207,7 +229,7 @@ TECH_DEFAULT_SECTION_ID=789012
 ### In Code
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 const client = new SubstackClient({
   apiKey: process.env.SUBSTACK_API_KEY!,
@@ -270,8 +292,8 @@ See the [n8n Integration Guide](docs/n8n-integration.md) for complete workflows 
 ### Setup
 
 ```bash
-git clone https://github.com/jakub-k-slys/substack-api.git
-cd substack-api
+git clone https://github.com/b992/sub-api.git
+cd sub-api
 npm install
 ```
 
@@ -373,13 +395,27 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## Links
 
-- **GitHub**: https://github.com/jakub-k-slys/substack-api
-- **npm**: https://www.npmjs.com/package/substack-api
-- **Documentation**: https://substack-api.readthedocs.io/
-- **Issues**: https://github.com/jakub-k-slys/substack-api/issues
+- **GitHub**: https://github.com/b992/sub-api
+- **Original Project**: https://github.com/jakub-k-slys/substack-api (by Jakub Slys)
+- **Issues**: https://github.com/b992/sub-api/issues
+
+## Changelog
+
+### v1.5.0 (Fork)
+- ✨ Added default section ID configuration
+- ✨ Enhanced multi-publication support
+- ✨ Complete metadata support (SEO, social, comments)
+- ✨ Improved n8n integration documentation
+- 📚 Comprehensive Ubuntu installation guide
+- 📚 Consolidated documentation structure
+
+### v1.4.0 (Upstream)
+- Original features from upstream repository
 
 ---
 
 **Made with ❤️ for the Substack community**
+
+*Enhanced fork by [b992](https://github.com/b992) • Original work by Jakub Slys*
 
 *Want to automate your newsletter? This is the tool for you!* 🚀
