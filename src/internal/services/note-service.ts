@@ -164,7 +164,8 @@ export class NoteService {
       image: base64Image
     }
 
-    const response = await this.httpClient.post<ImageUploadResponse>(
+    // IMPORTANT: Image uploads must go to https://substack.com, not publication subdomain
+    const response = await this.httpClient.globalPost<ImageUploadResponse>(
       '/api/v1/image',
       request
     )
@@ -185,7 +186,8 @@ export class NoteService {
       type
     }
 
-    const response = await this.httpClient.post<CreateAttachmentResponse>(
+    // IMPORTANT: Attachment creation must go to https://substack.com, not publication subdomain
+    const response = await this.httpClient.globalPost<CreateAttachmentResponse>(
       '/api/v1/comment/attachment',
       request
     )
