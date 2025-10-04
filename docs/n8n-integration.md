@@ -96,6 +96,275 @@ const client = new SubstackClient({
 });
 ```
 
+## Share Center Integration (Publish + Share)
+
+### Quick Start: Publish Post with Share Note
+
+The `publishWithNote()` method combines post publishing with automatic note sharing, just like Substack's Share Center!
+
+**Features:**
+- ✅ Publish post with full metadata
+- ✅ Automatically share as a note
+- ✅ Includes `showWelcomeOnShare=true` parameter
+- ✅ One command, complete workflow
+
+### n8n Code Node Setup
+
+```javascript
+const { SubstackClient } = require('@b992/substack-api');
+
+// Initialize client
+const client = new SubstackClient({
+  apiKey: process.env.SUBSTACK_API_KEY,
+  hostname: process.env.SUBSTACK_HOSTNAME,
+  defaultSectionId: parseInt(process.env.SUBSTACK_DEFAULT_SECTION_ID)
+});
+
+// Get authenticated profile
+const profile = await client.ownProfile();
+
+// Publish post with share note (one call!)
+const { post, note } = await profile.publishWithNote(
+  profile.newPost()
+    .setTitle('Your Article Title')
+    .setSubtitle('Your subtitle here')
+    .setBodyHtml('<h2>Heading</h2><p>Content here...</p>')
+    .setCoverImage('https://example.com/image.jpg')
+    .setTags(['AI', 'Writing', 'Technology'])
+    .setDescription('SEO description')
+    .setSearchEngineTitle('SEO Title')
+    .setSocialTitle('Social Media Title'),
+  
+  // Share note text (optional)
+  '🎉 Just published a new article! Check it out.'
+);
+
+// Return results
+return [{
+  json: {
+    success: true,
+    post: {
+      id: post.id,
+      title: post.title,
+      url: `https://${process.env.SUBSTACK_HOSTNAME}/p/${post.slug}`,
+      published: post.is_published
+    },
+    note: note ? {
+      id: note.id,
+      url: `https://${process.env.SUBSTACK_HOSTNAME}/notes/note/${note.id}`,
+      includesWelcomeParam: true
+    } : null
+  }
+}];
+```
+
+### Input Data Format
+
+If you're getting data from previous nodes:
+
+```javascript
+const { SubstackClient } = require('@b992/substack-api');
+
+// Get data from previous node
+const inputData = $input.first().json;
+
+const client = new SubstackClient({
+  apiKey: process.env.SUBSTACK_API_KEY,
+  hostname: process.env.SUBSTACK_HOSTNAME,
+  defaultSectionId: parseInt(process.env.SUBSTACK_DEFAULT_SECTION_ID)
+});
+
+const profile = await client.ownProfile();
+
+const { post, note } = await profile.publishWithNote(
+  profile.newPost()
+    .setTitle(inputData.title)
+    .setSubtitle(inputData.subtitle || '')
+    .setBodyHtml(inputData.content)
+    .setCoverImage(inputData.coverImage || '')
+    .setTags(inputData.tags || [])
+    .setDescription(inputData.description || ''),
+  inputData.shareNoteText || 'Check out my new post!'
+);
+
+return [{ json: { post, note } }];
+```
+
+### Expected Input JSON Structure
+
+```json
+{
+  "title": "Your Article Title",
+  "subtitle": "Optional subtitle",
+  "content": "<h2>Heading</h2><p>Your HTML content here</p>",
+  "coverImage": "https://example.com/image.jpg",
+  "tags": ["AI", "Writing", "Tech"],
+  "description": "SEO description for search engines",
+  "shareNoteText": "🎉 New article published! Check it out!"
+}
+```
+
+### Output JSON Structure
+
+```json
+{
+  "success": true,
+  "post": {
+    "id": 175259998,
+    "title": "Your Article Title",
+    "slug": "your-article-title-abc",
+    "url": "https://yourpub.substack.com/p/your-article-title-abc",
+    "is_published": true,
+    "post_date": "2025-10-04T08:00:00.000Z"
+  },
+  "note": {
+    "id": 162822956,
+    "url": "https://yourpub.substack.com/notes/note/162822956",
+    "includesWelcomeParam": true
+  }
+}
+```
+
+### Behind the Scenes: API Calls
+
+When you use `publishWithNote()`, these API calls happen automatically:
+
+**1. Create Draft**
+```
+POST /api/v1/drafts
+Content-Type: application/json
+
+{}  // Creates empty draft
+```
+
+**2. Update Draft with Content**
+```
+PUT /api/v1/drafts/{draft_id}
+Content-Type: application/json
+
+{
+  "draft_title": "Your Title",
+  "draft_subtitle": "Your Subtitle",
+  "draft_body": "{\"type\":\"doc\",\"content\":[...]}",
+  "cover_image": "https://...",
+  "description": "SEO description",
+  "section_id": 194500,
+  "audience": "everyone",
+  "editor_v2": true
+}
+```
+
+**3. Publish the Draft**
+```
+PUT /api/v1/drafts/{draft_id}
+Content-Type: application/json
+
+{
+  "is_published": true,
+  "should_send_email": true
+}
+```
+
+**4. Create Note Attachment (with special parameter)**
+```
+POST /api/v1/comment/attachment
+Content-Type: application/json
+
+{
+  "type": "link",
+  "url": "https://yourpub.substack.com/p/post-slug?showWelcomeOnShare=true"
+}
+
+Response:
+{
+  "id": "attachment-uuid",
+  ...
+}
+```
+
+**5. Publish Note with Attachment**
+```
+POST /api/v1/comment/feed
+Content-Type: application/json
+
+{
+  "bodyJson": {
+    "type": "doc",
+    "attrs": {"schemaVersion": "v1"},
+    "content": [{
+      "type": "paragraph",
+      "content": [{"type": "text", "text": "Check out my new post!"}]
+    }]
+  },
+  "attachmentIds": ["attachment-uuid"],
+  "replyMinimumRole": "everyone"
+}
+```
+
+### The Special Parameter: `showWelcomeOnShare=true`
+
+This parameter is **automatically added** to the post URL when shared as a note. It:
+- ✅ Triggers Substack's welcome/onboarding flow for readers
+- ✅ May improve subscription conversion rates
+- ✅ Matches official Share Center behavior exactly
+- ✅ Helps analytics distinguish shared note traffic
+
+### Complete n8n Workflow Example
+
+```
+[Schedule Trigger]
+    ↓
+[Google Sheets: Read Row]  ← Get article data
+    ↓
+[Code Node: Format Content]  ← Transform to HTML
+    ↓
+[Code Node: Publish with Share]  ← Use publishWithNote()
+    ↓
+[Set Node: Store Results]
+    ↓
+[Slack: Send Notification]  ← Alert on success
+```
+
+### Error Handling
+
+```javascript
+const { SubstackClient } = require('@b992/substack-api');
+
+try {
+  const client = new SubstackClient({
+    apiKey: process.env.SUBSTACK_API_KEY,
+    hostname: process.env.SUBSTACK_HOSTNAME,
+    defaultSectionId: parseInt(process.env.SUBSTACK_DEFAULT_SECTION_ID)
+  });
+
+  const profile = await client.ownProfile();
+  
+  const { post, note } = await profile.publishWithNote(
+    profile.newPost()
+      .setTitle($json.title)
+      .setBodyHtml($json.content),
+    $json.shareText
+  );
+
+  return [{
+    json: {
+      success: true,
+      postUrl: `https://${process.env.SUBSTACK_HOSTNAME}/p/${post.slug}`,
+      noteId: note?.id
+    }
+  }];
+  
+} catch (error) {
+  return [{
+    json: {
+      success: false,
+      error: error.message,
+      details: error.stack
+    }
+  }];
+}
+```
+
 ## Workflow Examples
 
 ### 1. Publish a Post

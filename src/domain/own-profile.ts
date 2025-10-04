@@ -11,7 +11,8 @@ import type {
   NoteService,
   FolloweeService,
   CommentService,
-  FeedService
+  FeedService,
+  ReactionService
 } from '../internal/services'
 
 /**
@@ -326,5 +327,72 @@ export class OwnProfile extends Profile {
     } catch {
       yield* []
     }
+  }
+
+  /**
+   * Publish a post and optionally share it as a note (Share Center workflow)
+   * 
+   * This method combines post publishing with the "Share as a note" functionality
+   * from Substack's Share Center, enabling automated post-and-promote workflows.
+   * 
+   * When sharing as a note, this adds the special `showWelcomeOnShare=true` parameter
+   * to the URL (same as Share Center), which may trigger special reader onboarding.
+   * 
+   * @param postBuilder - A configured PostBuilder instance
+   * @param noteText - Optional text for the note (e.g., "Check out my new article!")
+   * @returns Promise with published post and optional note
+   * @throws {Error} When post publishing fails
+   * 
+   * @example
+   * ```typescript
+   * const { post, note } = await profile.publishWithNote(
+   *   profile.newPost()
+   *     .setTitle('My Article')
+   *     .setBodyHtml('<p>Content</p>'),
+   *   '🎉 New article published! Check it out.'
+   * )
+   * ```
+   */
+  async publishWithNote(
+    postBuilder: PostBuilder,
+    noteText?: string
+  ): Promise<{ post: any; note?: any }> {
+    // 1. Publish the post
+    const post = await postBuilder.publish()
+    
+    // 2. If noteText is provided, share as a note
+    let note: any | undefined
+    if (noteText) {
+      try {
+        // Construct the post URL (canonical_url may not be in publish response)
+        let postUrl = post.canonical_url
+        if (!postUrl && post.slug) {
+          // Construct from slug if canonical_url is missing
+          // Extract hostname from client's baseUrl
+          const baseUrl = (this.client as any).baseUrl as string
+          const hostname = baseUrl ? new URL(baseUrl).hostname : 'substack.com'
+          postUrl = `https://${hostname}/p/${post.slug}`
+        }
+        
+        if (postUrl) {
+          // Add the Share Center's special parameter to the URL
+          // This triggers the welcome/onboarding experience for readers
+          const shareUrl = postUrl.includes('?')
+            ? `${postUrl}&showWelcomeOnShare=true`
+            : `${postUrl}?showWelcomeOnShare=true`
+          
+          note = await this.newNoteWithLink(shareUrl)
+            .paragraph()
+            .text(noteText)
+            .publish()
+        }
+      } catch (error) {
+        // Note publishing failed, but post is already published
+        // Log the error but don't fail the whole operation
+        console.error('Failed to publish share note:', (error as Error).message)
+      }
+    }
+    
+    return { post, note }
   }
 }
