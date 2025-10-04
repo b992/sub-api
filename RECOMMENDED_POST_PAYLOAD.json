@@ -1,0 +1,20 @@
+{
+  "_comment": "Recommended Post Payload - Good Balance",
+  "_note": "These fields cover most use cases and provide good SEO",
+  
+  "title": "How to Build Amazing Things with APIs",
+  "subtitle": "A practical guide for developers",
+  "content": "<h2>Getting Started</h2><p>APIs are powerful tools...</p><h3>Core Concepts</h3><p>Let's explore the fundamentals.</p>",
+  
+  "coverImage": "https://example.com/cover.jpg",
+  
+  "seoTitle": "API Development Guide - Build Amazing Things | DevBlog",
+  "seoDescription": "Learn API development from scratch. Includes practical examples, best practices, and real-world projects.",
+  
+  "socialTitle": "🔧 The Ultimate API Development Guide",
+  
+  "tags": ["API", "Development", "Tutorial"],
+  
+  "sectionId": 194500
+}
+

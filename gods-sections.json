@@ -1,0 +1,46 @@
+{
+  "sections": {
+    "Journey to the East": {
+      "id": 176210,
+      "emoji": "🐉",
+      "description": "Asian mythology and legends"
+    },
+    "Myths of the Ancients": {
+      "id": 176211,
+      "emoji": "⚡️",
+      "description": "Greek, Roman, and ancient mythologies"
+    },
+    "Curious Histories": {
+      "id": 176365,
+      "emoji": "🔎",
+      "description": "Unusual and fascinating historical events"
+    },
+    "Medieval Tales": {
+      "id": 176624,
+      "emoji": "🏰",
+      "description": "Stories from the Middle Ages"
+    },
+    "The Monster Manual": {
+      "id": 176629,
+      "emoji": "🐺",
+      "description": "Creatures and monsters from various mythologies"
+    },
+    "Viking Myths and Legends": {
+      "id": 179896,
+      "emoji": "❄️",
+      "description": "Norse mythology and Viking tales"
+    },
+    "Beyond the Grave": {
+      "id": 179897,
+      "emoji": "💀",
+      "description": "Death rituals, afterlife beliefs, and related topics",
+      "note": "Assumed ID - please verify if this is correct (was listed as 179896 same as Viking)"
+    },
+    "Weird Jobs of History": {
+      "id": 191903,
+      "emoji": "🤢",
+      "description": "Strange and unusual occupations throughout history"
+    }
+  }
+}
+

@@ -1,0 +1,8 @@
+{
+  "_comment": "Minimal Post Payload - Only Required Fields",
+  "_note": "This is the absolute minimum to publish a post",
+  
+  "title": "My Post Title",
+  "content": "<p>Your content here...</p>"
+}
+

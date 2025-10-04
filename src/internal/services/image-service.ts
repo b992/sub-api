@@ -21,13 +21,17 @@ export class ImageService {
    * );
    * // Returns: 'https://substack-post-media.s3.amazonaws.com/public/images/abc123.png'
    * ```
+   * 
+   * IMPORTANT: Image uploads must go to https://substack.com (global domain),
+   * not the publication subdomain. This is consistent with note attachments.
    */
   async uploadImage(base64Image: string, postId: number): Promise<string> {
     if (!base64Image.startsWith('data:image/')) {
       throw new Error('Image must be a base64 data URI (e.g., data:image/png;base64,...)')
     }
 
-    const response = await this.client.post<{ url: string }>('/api/v1/image', {
+    // Use globalPost to hit substack.com, not publication domain
+    const response = await this.client.globalPost<{ url: string }>('/api/v1/image', {
       image: base64Image,
       postId
     })

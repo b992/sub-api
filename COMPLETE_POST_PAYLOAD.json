@@ -1,0 +1,60 @@
+{
+  "_comment": "Complete Post Payload with Full Metadata and Image",
+  "_note": "This shows ALL available fields. Most are optional.",
+  
+  "title": "Complete Guide to Substack API Automation",
+  "subtitle": "Everything you need to know about programmatic publishing",
+  "content": "<h2>Introduction</h2><p>This is a comprehensive guide...</p><h3>Key Features</h3><ul><li>Automated publishing</li><li>Full metadata control</li><li>SEO optimization</li></ul><p>Let's dive in!</p>",
+  
+  "_section_cover_image": "=== COVER IMAGE (2 options) ===",
+  "coverImage_option1_base64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4AAAA...",
+  "coverImage_option2_url": "https://example.com/images/cover-1200x630.jpg",
+  "coverImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4AAAA...",
+  
+  "_section_seo": "=== SEO OPTIMIZATION ===",
+  "seoTitle": "Complete Guide to Substack API Automation | Your Publication Name",
+  "seoDescription": "Learn how to automate your Substack publishing with our comprehensive API guide. Includes code examples, best practices, and advanced techniques.",
+  "description": "Comprehensive guide to Substack API automation with examples",
+  
+  "_section_social": "=== SOCIAL MEDIA ===",
+  "socialTitle": "🚀 Master Substack API Automation - Complete Guide Inside!",
+  
+  "_section_organization": "=== ORGANIZATION ===",
+  "tags": [
+    "API",
+    "Automation",
+    "Tutorial",
+    "Technology",
+    "Substack"
+  ],
+  "sectionId": 194500,
+  
+  "_section_comments": "=== COMMENT SETTINGS ===",
+  "commentPermissions": "everyone",
+  "_commentPermissions_options": ["everyone", "paid", "founding", "no_one"],
+  "commentSort": "best_first",
+  "_commentSort_options": ["best_first", "newest_first", "oldest_first"],
+  
+  "_section_advanced": "=== ADVANCED SETTINGS ===",
+  "explicit": false,
+  "hideFromFeed": false,
+  
+  "_section_notes": [
+    "=== FIELD DETAILS ===",
+    "- title: Required. Max 255 characters recommended",
+    "- subtitle: Optional. Appears below title",
+    "- content: Required. HTML formatted content",
+    "- coverImage: Base64 (uploaded) OR URL (direct)",
+    "- seoTitle: For search engines. 60 chars max",
+    "- seoDescription: Meta description. 150-160 chars recommended",
+    "- description: Short preview. Used if seoDescription not set",
+    "- socialTitle: For social media shares",
+    "- tags: Array of strings. 3-5 recommended",
+    "- sectionId: Required for publishing. Get from Settings",
+    "- commentPermissions: Who can comment",
+    "- commentSort: Default sort order for comments",
+    "- explicit: Mark as explicit content",
+    "- hideFromFeed: Hide from main feed"
+  ]
+}
+
