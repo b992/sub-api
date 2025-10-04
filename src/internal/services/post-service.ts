@@ -237,7 +237,7 @@ export class PostService {
           innerHtml = item.replace(/<li[^>]*>(.*?)<\/li>/is, '$1')
           const formattedContent = this.parseInlineFormatting(innerHtml)
           return {
-            type: 'listItem',
+            type: 'list_item',
             content: [{
               type: 'paragraph',
               content: formattedContent.length > 0 ? formattedContent : [{ type: 'text', text: '' }]
@@ -247,7 +247,7 @@ export class PostService {
         
         if (listItems.length > 0) {
           content.push({
-            type: 'bulletList',
+            type: 'bullet_list',
             content: listItems
           })
         }
@@ -259,7 +259,7 @@ export class PostService {
           innerHtml = item.replace(/<li[^>]*>(.*?)<\/li>/is, '$1')
           const formattedContent = this.parseInlineFormatting(innerHtml)
           return {
-            type: 'listItem',
+            type: 'list_item',
             content: [{
               type: 'paragraph',
               content: formattedContent.length > 0 ? formattedContent : [{ type: 'text', text: '' }]
@@ -269,7 +269,7 @@ export class PostService {
         
         if (listItems.length > 0) {
           content.push({
-            type: 'orderedList',
+            type: 'ordered_list',
             content: listItems
           })
         }
