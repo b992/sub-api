@@ -1,0 +1,22 @@
+{
+  "node1_config": {
+    "API_KEY": "s%3Aw_JqH1OwRTbSYFZpSVRsoiunqORPrmvT.cbXS44BJpaS1bPuu%2F0FTLYho8%2BEONR6G8aw2vH5Q48w\n",
+    "publication": "https://thegodsandmonsters.substack.com/",
+    "section_ID": null
+  },
+  "node2_output": {
+    "title": "SDK Test Post v1.6.0",
+    "subtitle": "Testing image upload and inline formatting",
+    "content": "<h2>Main Heading</h2><p>This is a test with <strong>bold text</strong> and <em>italic text</em>.</p><p>Here's a <a href=\"https://example.com\">link</a> and some <code>inline code</code>.</p><ul><li>Bullet point 1</li><li>Bullet point 2</li></ul>",
+    "seoTitle": "SDK Test Post - Version 1.6.0",
+    "seoDescription": "Testing all SDK v1.6.0 fixes: image upload, author bylines, HTML formatting",
+    "socialTitle": "Testing SDK v1.6.0 fixes! 🚀",
+    "shareNoteText": "🧪 Testing SDK v1.6.0 - all fixes applied!",
+    "tags": ["test", "sdk", "v1.6.0"],
+    "sectionId": 176629,
+    "commentPermissions": "everyone"
+  },
+  "node3_image": {
+    "referenceImageBase64": "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAXklEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOBjAB2gAAE2OFgRAAAAAElFTkSuQmCC"
+  }
+}
