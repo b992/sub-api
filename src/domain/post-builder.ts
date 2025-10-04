@@ -281,10 +281,13 @@ export class PostBuilder {
 
       // Upload the image
       try {
+        console.log(`[PostBuilder] Uploading image for post ${tempDraft.id}...`)
         coverImageToUse = await this.imageService.uploadImage(coverImageToUse, tempDraft.id)
+        console.log(`[PostBuilder] Image uploaded successfully: ${coverImageToUse}`)
       } catch (error) {
         // If image upload fails, continue without cover image
-        console.warn('Failed to upload cover image:', (error as Error).message)
+        console.error('[PostBuilder] Failed to upload cover image:', (error as Error).message)
+        console.error('[PostBuilder] Error stack:', (error as Error).stack)
         coverImageToUse = undefined
       }
     }
