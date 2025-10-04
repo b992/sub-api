@@ -99,6 +99,7 @@ export class SubstackClient {
         this.config.defaultSectionId, // defaultSectionId
         this.feedService,             // feedService
         this.imageService,            // imageService
+        userId,                       // userId (for author bylines)
         resolvedSlug,                 // resolvedSlug
         this.slugService.getSlugForUserId.bind(this.slugService) // slugResolver
       )

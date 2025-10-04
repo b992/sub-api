@@ -57,8 +57,114 @@ export class PostService {
   }
 
   /**
+   * Parse inline HTML formatting into Substack marks
+   * Inspired by draft_create.py parse_inline_formatting()
+   */
+  private parseInlineFormatting(html: string): any[] {
+    const elements: any[] = []
+    let currentPos = 0
+
+    // Patterns for inline formatting (order matters!)
+    const patterns = [
+      { regex: /<strong[^>]*>(.*?)<\/strong>/gi, mark: 'strong' },
+      { regex: /<b[^>]*>(.*?)<\/b>/gi, mark: 'strong' },
+      { regex: /<em[^>]*>(.*?)<\/em>/gi, mark: 'em' },
+      { regex: /<i[^>]*>(.*?)<\/i>/gi, mark: 'em' },
+      { regex: /<del[^>]*>(.*?)<\/del>/gi, mark: 'strikethrough' },
+      { regex: /<s[^>]*>(.*?)<\/s>/gi, mark: 'strikethrough' },
+      { regex: /<code[^>]*>(.*?)<\/code>/gi, mark: 'code' },
+      { regex: /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, mark: 'link' }
+    ]
+
+    // Find all matches
+    const matches: Array<{ start: number; end: number; type: string; text: string; url?: string }> = []
+    
+    for (const { regex, mark } of patterns) {
+      let match
+      regex.lastIndex = 0 // Reset regex
+      while ((match = regex.exec(html)) !== null) {
+        if (mark === 'link') {
+          matches.push({
+            start: match.index,
+            end: regex.lastIndex,
+            type: mark,
+            text: match[2],
+            url: match[1]
+          })
+        } else {
+          matches.push({
+            start: match.index,
+            end: regex.lastIndex,
+            type: mark,
+            text: match[1]
+          })
+        }
+      }
+    }
+
+    // Sort by position
+    matches.sort((a, b) => a.start - b.start)
+
+    // Build elements array
+    for (const match of matches) {
+      // Add plain text before this match
+      if (match.start > currentPos) {
+        const plainText = html.substring(currentPos, match.start).replace(/<[^>]+>/g, '').trim()
+        if (plainText) {
+          elements.push({ type: 'text', text: plainText })
+        }
+      }
+
+      // Add formatted text
+      if (match.type === 'link') {
+        elements.push({
+          type: 'text',
+          text: match.text,
+          marks: [{
+            type: 'link',
+            attrs: {
+              href: match.url,
+              target: '_blank',
+              rel: 'noopener noreferrer nofollow',
+              class: null
+            }
+          }]
+        })
+      } else {
+        elements.push({
+          type: 'text',
+          text: match.text,
+          marks: [{ type: match.type }]
+        })
+      }
+
+      currentPos = match.end
+    }
+
+    // Add remaining text
+    if (currentPos < html.length) {
+      const remainingText = html.substring(currentPos).replace(/<[^>]+>/g, '').trim()
+      if (remainingText) {
+        elements.push({ type: 'text', text: remainingText })
+      }
+    }
+
+    // If no formatting found, return simple text
+    if (elements.length === 0) {
+      const plainText = html.replace(/<[^>]+>/g, '').trim()
+      if (plainText) {
+        elements.push({ type: 'text', text: plainText })
+      }
+    }
+
+    // Remove empty elements
+    return elements.filter(el => el.text && el.text.trim() !== '')
+  }
+
+  /**
    * Convert HTML to Substack's JSON document format
-   * Basic implementation - handles common HTML tags
+   * NOW WITH INLINE FORMATTING SUPPORT (bold, italic, links, code, etc.)
+   * Based on draft_create.py parser architecture
    */
   private htmlToSubstackJson(html: string): any {
     const content: any[] = []
@@ -67,53 +173,78 @@ export class PostService {
       return { type: 'doc', content: [] }
     }
 
-    // Simple HTML parsing - convert basic tags to Substack format
-    const lines = html.split('\n').filter(line => line.trim())
+    // Extract complete HTML tags using regex (handles multi-line tags)
+    const tagRegex = /<(h2|h3|h4|p|ul|ol|li)[^>]*>.*?<\/\1>/gis
+    const matches = html.match(tagRegex) || []
     
-    for (const line of lines) {
-      const trimmed = line.trim()
+    for (const match of matches) {
+      const trimmed = match.trim()
+      
+      // Extract inner HTML (with inline formatting preserved)
+      let innerHtml = ''
       
       // Heading 2
-      if (trimmed.match(/^<h2[^>]*>(.*?)<\/h2>/i)) {
-        const text = trimmed.replace(/<h2[^>]*>(.*?)<\/h2>/i, '$1').replace(/<[^>]+>/g, '')
-        content.push({
-          type: 'heading',
-          attrs: { level: 2 },
-          content: [{ type: 'text', text }]
-        })
-      }
-      // Heading 3
-      else if (trimmed.match(/^<h3[^>]*>(.*?)<\/h3>/i)) {
-        const text = trimmed.replace(/<h3[^>]*>(.*?)<\/h3>/i, '$1').replace(/<[^>]+>/g, '')
-        content.push({
-          type: 'heading',
-          attrs: { level: 3 },
-          content: [{ type: 'text', text }]
-        })
-      }
-      // Paragraph
-      else if (trimmed.match(/^<p[^>]*>(.*?)<\/p>/i)) {
-        const text = trimmed.replace(/<p[^>]*>(.*?)<\/p>/i, '$1').replace(/<[^>]+>/g, '')
-        if (text) {
+      if (trimmed.match(/^<h2[^>]*>/i)) {
+        innerHtml = trimmed.replace(/<h2[^>]*>(.*?)<\/h2>/is, '$1')
+        const formattedContent = this.parseInlineFormatting(innerHtml)
+        if (formattedContent.length > 0) {
           content.push({
-            type: 'paragraph',
-            content: [{ type: 'text', text }]
+            type: 'heading',
+            attrs: { level: 2 },
+            content: formattedContent
           })
         }
       }
-      // List items (unordered)
-      else if (trimmed.match(/^<ul[^>]*>(.*?)<\/ul>/is)) {
-        const items = trimmed.match(/<li[^>]*>(.*?)<\/li>/gi) || []
+      // Heading 3
+      else if (trimmed.match(/^<h3[^>]*>/i)) {
+        innerHtml = trimmed.replace(/<h3[^>]*>(.*?)<\/h3>/is, '$1')
+        const formattedContent = this.parseInlineFormatting(innerHtml)
+        if (formattedContent.length > 0) {
+          content.push({
+            type: 'heading',
+            attrs: { level: 3 },
+            content: formattedContent
+          })
+        }
+      }
+      // Heading 4
+      else if (trimmed.match(/^<h4[^>]*>/i)) {
+        innerHtml = trimmed.replace(/<h4[^>]*>(.*?)<\/h4>/is, '$1')
+        const formattedContent = this.parseInlineFormatting(innerHtml)
+        if (formattedContent.length > 0) {
+          content.push({
+            type: 'heading',
+            attrs: { level: 3 }, // h4 maps to level 3 in Substack
+            content: formattedContent
+          })
+        }
+      }
+      // Paragraph (most common)
+      else if (trimmed.match(/^<p[^>]*>/i)) {
+        innerHtml = trimmed.replace(/<p[^>]*>(.*?)<\/p>/is, '$1')
+        const formattedContent = this.parseInlineFormatting(innerHtml)
+        if (formattedContent.length > 0) {
+          content.push({
+            type: 'paragraph',
+            content: formattedContent
+          })
+        }
+      }
+      // Unordered list
+      else if (trimmed.match(/^<ul[^>]*>/i)) {
+        const items = trimmed.match(/<li[^>]*>.*?<\/li>/gis) || []
         const listItems = items.map(item => {
-          const text = item.replace(/<li[^>]*>(.*?)<\/li>/i, '$1').replace(/<[^>]+>/g, '')
+          innerHtml = item.replace(/<li[^>]*>(.*?)<\/li>/is, '$1')
+          const formattedContent = this.parseInlineFormatting(innerHtml)
           return {
             type: 'listItem',
             content: [{
               type: 'paragraph',
-              content: [{ type: 'text', text }]
+              content: formattedContent.length > 0 ? formattedContent : [{ type: 'text', text: '' }]
             }]
           }
-        })
+        }).filter(item => item.content[0].content.length > 0)
+        
         if (listItems.length > 0) {
           content.push({
             type: 'bulletList',
@@ -121,16 +252,37 @@ export class PostService {
           })
         }
       }
-      // Single list item (when not wrapped in ul)
-      else if (trimmed.match(/^<li[^>]*>(.*?)<\/li>/i)) {
-        const text = trimmed.replace(/<li[^>]*>(.*?)<\/li>/i, '$1').replace(/<[^>]+>/g, '')
-        // Skip - should be part of a list
+      // Ordered list
+      else if (trimmed.match(/^<ol[^>]*>/i)) {
+        const items = trimmed.match(/<li[^>]*>.*?<\/li>/gis) || []
+        const listItems = items.map(item => {
+          innerHtml = item.replace(/<li[^>]*>(.*?)<\/li>/is, '$1')
+          const formattedContent = this.parseInlineFormatting(innerHtml)
+          return {
+            type: 'listItem',
+            content: [{
+              type: 'paragraph',
+              content: formattedContent.length > 0 ? formattedContent : [{ type: 'text', text: '' }]
+            }]
+          }
+        }).filter(item => item.content[0].content.length > 0)
+        
+        if (listItems.length > 0) {
+          content.push({
+            type: 'orderedList',
+            content: listItems
+          })
+        }
       }
-      // Plain text or other HTML
-      else if (trimmed && !trimmed.startsWith('<')) {
+    }
+
+    // If no matches found, treat entire HTML as paragraph
+    if (content.length === 0 && html.trim()) {
+      const formattedContent = this.parseInlineFormatting(html)
+      if (formattedContent.length > 0) {
         content.push({
           type: 'paragraph',
-          content: [{ type: 'text', text: trimmed }]
+          content: formattedContent
         })
       }
     }
@@ -167,15 +319,20 @@ export class PostService {
   /**
    * Create a new post draft
    * @param postData - The post data to create
+   * @param userId - Optional user ID for author bylines (recommended!)
    * @returns Promise<CreatePostResponse> - The created draft data
    * @throws {Error} When draft creation fails
    * 
    * NOTE: This endpoint works on the PUBLICATION domain, not global substack.com
    * The API requires empty POST first, then PUT to update with content
+   * 
+   * UPDATED: Now accepts userId for proper author attribution
    */
-  async createPost(postData: CreatePostRequest): Promise<CreatePostResponse> {
+  async createPost(postData: CreatePostRequest, userId?: number): Promise<CreatePostResponse> {
+    // Build draft_bylines array
+    const draftBylines = userId ? [{ id: userId, is_guest: false }] : []
+    
     // Step 1: Create an empty draft (POST /api/v1/drafts)
-    // Note: draft_bylines is required (can be empty array for single author)
     const draftResponse = await this.httpClient.post<{
       id: number
       draft_title?: string
@@ -187,7 +344,7 @@ export class PostService {
       slug?: string
       canonical_url?: string
     }>('/api/v1/drafts', {
-      draft_bylines: []
+      draft_bylines: draftBylines
     })
 
     const draftId = draftResponse.id
@@ -202,6 +359,7 @@ export class PostService {
         draft_title: postData.title,
         draft_subtitle: postData.subtitle,
         draft_body: JSON.stringify(bodyJson), // Must be stringified JSON!
+        draft_bylines: draftBylines, // Include author bylines
         type: postData.type || 'newsletter',
         audience: postData.audience || 'everyone',
         

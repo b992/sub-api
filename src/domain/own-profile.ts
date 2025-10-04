@@ -20,6 +20,8 @@ import type {
  * OwnProfile extends Profile with write capabilities for the authenticated user
  */
 export class OwnProfile extends Profile {
+  private readonly userId: number  // Store user ID for author bylines
+  
   constructor(
     rawData: SubstackFullProfile,
     client: HttpClient,
@@ -32,6 +34,7 @@ export class OwnProfile extends Profile {
     private readonly defaultSectionId: number | undefined,
     private readonly feedService: FeedService,
     private readonly imageService: ImageService,
+    userId: number,  // Accept userId as parameter
     resolvedSlug?: string,
     slugResolver?: (userId: number, fallbackHandle?: string) => Promise<string | undefined>
   ) {
@@ -46,6 +49,7 @@ export class OwnProfile extends Profile {
       resolvedSlug,
       slugResolver
     )
+    this.userId = userId
   }
 
   /**
@@ -74,7 +78,7 @@ export class OwnProfile extends Profile {
    * Create a new post builder that can be used to construct and create a post
    */
   newPost(): PostBuilder {
-    const builder = new PostBuilder(this.client, this.postService, this.imageService)
+    const builder = new PostBuilder(this.client, this.postService, this.imageService, this.userId)
     // Auto-set default section if configured
     if (this.defaultSectionId) {
       builder.setSection(this.defaultSectionId)

@@ -34,7 +34,8 @@ export class PostBuilder {
   constructor(
     private readonly client: HttpClient,
     private readonly postService: PostService,
-    private readonly imageService?: ImageService
+    private readonly imageService?: ImageService,
+    private readonly userId?: number  // User ID for author bylines
   ) {}
 
   /**
@@ -277,7 +278,7 @@ export class PostBuilder {
         type: this.type,
         audience: this.audience,
         is_published: false
-      })
+      }, this.userId)  // Pass userId for author bylines
 
       // Upload the image
       try {
@@ -297,7 +298,7 @@ export class PostBuilder {
     postData.cover_image = coverImageToUse
 
     // Create as draft with all content/metadata
-    const draft = await this.postService.createPost(postData)
+    const draft = await this.postService.createPost(postData, this.userId)  // Pass userId
     
     // Then publish it (just flips the state)
     return await this.postService.publishPost(draft.id)
