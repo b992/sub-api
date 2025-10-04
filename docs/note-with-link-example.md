@@ -5,7 +5,7 @@ This example demonstrates how to use the new `newNoteWithLink` feature to create
 ## Basic Usage
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 const client = new SubstackClient({
   apiKey: 'your-api-key',

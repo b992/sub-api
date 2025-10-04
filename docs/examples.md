@@ -7,7 +7,7 @@ This section provides practical examples of using the modern SubstackClient enti
 ### Initialize the Client
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 // Initialize with connect.sid cookie
 const client = new SubstackClient({

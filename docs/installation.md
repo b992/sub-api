@@ -11,7 +11,7 @@
 You can install the package using npm:
 
 ```bash
-npm install substack-api
+npm install @b992/substack-api
 ```
 
 ## Yarn Installation
@@ -19,7 +19,7 @@ npm install substack-api
 If you prefer using yarn:
 
 ```bash
-yarn add substack-api
+yarn add @b992/substack-api
 ```
 
 ## TypeScript Configuration
@@ -42,7 +42,7 @@ For optimal TypeScript integration, ensure your `tsconfig.json` includes:
 To verify the installation, you can create a simple test file:
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 const client = new SubstackClient({
   apiKey: 'your-connect-sid-cookie-value',

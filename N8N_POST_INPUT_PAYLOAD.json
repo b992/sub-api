@@ -1,0 +1,26 @@
+{
+  "_comment": "Expected Input Payload for n8n Post Publishing",
+  "_note": "All fields except 'title' and 'content' are optional",
+  
+  "title": "Your Article Title Here",
+  "subtitle": "Optional subtitle that appears below the title",
+  "content": "<h2>Introduction</h2><p>Your HTML content here...</p><p>Supports <strong>bold</strong>, <em>italic</em>, and all HTML formatting.</p>",
+  
+  "seoTitle": "SEO-Optimized Title for Search Engines | Your Site",
+  "seoDescription": "Meta description for search engines - appears in Google results (150-160 chars recommended)",
+  "description": "Short description used for previews and SEO if seoDescription not provided",
+  
+  "socialTitle": "📱 Social Media Title - Catchy for Twitter/Facebook shares",
+  "coverImage": "https://example.com/images/cover-image.jpg",
+  
+  "tags": ["AI", "Writing", "Technology", "Tutorial"],
+  
+  "sectionId": 194500,
+  
+  "commentPermissions": "everyone",
+  "commentSort": "best_first",
+  
+  "explicit": false,
+  "hideFromFeed": false
+}
+

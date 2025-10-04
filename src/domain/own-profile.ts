@@ -12,7 +12,8 @@ import type {
   FolloweeService,
   CommentService,
   FeedService,
-  ReactionService
+  ReactionService,
+  ImageService
 } from '../internal/services'
 
 /**
@@ -30,6 +31,7 @@ export class OwnProfile extends Profile {
     reactionService: ReactionService,
     private readonly defaultSectionId: number | undefined,
     private readonly feedService: FeedService,
+    private readonly imageService: ImageService,
     resolvedSlug?: string,
     slugResolver?: (userId: number, fallbackHandle?: string) => Promise<string | undefined>
   ) {
@@ -72,7 +74,7 @@ export class OwnProfile extends Profile {
    * Create a new post builder that can be used to construct and create a post
    */
   newPost(): PostBuilder {
-    const builder = new PostBuilder(this.client, this.postService)
+    const builder = new PostBuilder(this.client, this.postService, this.imageService)
     // Auto-set default section if configured
     if (this.defaultSectionId) {
       builder.setSection(this.defaultSectionId)

@@ -5,7 +5,7 @@ This example demonstrates how to use the new post creation APIs to create, edit,
 ## Basic Post Creation
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 const client = new SubstackClient({
   apiKey: 'your-connect-sid-cookie-value',

@@ -1,0 +1,24 @@
+{
+  "_comment": "Output Payload from n8n Post Publishing",
+  "_note": "This is what you'll receive after successful publishing",
+  
+  "success": true,
+  "post": {
+    "id": 175259998,
+    "title": "Your Article Title Here",
+    "subtitle": "Optional subtitle that appears below the title",
+    "slug": "your-article-title-here",
+    "url": "https://yourpub.substack.com/p/your-article-title-here",
+    "coverImage": "https://example.com/images/cover-image.jpg",
+    "isPublished": true,
+    "postDate": "2025-10-04T10:30:00.000Z",
+    "description": "Short description used for previews and SEO",
+    "tags": ["AI", "Writing", "Technology", "Tutorial"],
+    "publicationId": 123456
+  },
+  "metadata": {
+    "publishedAt": "2025-10-04T10:30:05.234Z",
+    "hostname": "yourpub.substack.com"
+  }
+}
+

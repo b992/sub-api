@@ -679,7 +679,7 @@ return [{
   json: {
     connected: true,
     profileName: profile.name,
-    profileHandle: profile.handle
+    profileSlug: profile.slug
   }
 }];
 ```

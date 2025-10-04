@@ -1,6 +1,6 @@
 import type { HttpClient } from '../internal/http-client'
 import type { CreatePostRequest, CreatePostResponse } from '../internal'
-import type { PostService } from '../internal/services'
+import type { PostService, ImageService } from '../internal/services'
 
 /**
  * Builder for creating Substack posts with a fluent interface
@@ -33,7 +33,8 @@ export class PostBuilder {
 
   constructor(
     private readonly client: HttpClient,
-    private readonly postService: PostService
+    private readonly postService: PostService,
+    private readonly imageService?: ImageService
   ) {}
 
   /**
@@ -85,7 +86,21 @@ export class PostBuilder {
   }
 
   /**
-   * Set the cover image URL
+   * Set the cover image URL or base64 string
+   * 
+   * If a base64 string is provided (starts with 'data:image/'), it will be
+   * automatically uploaded to Substack's S3 storage during publish.
+   * 
+   * @param cover_image - Either a URL or base64 encoded image string
+   * 
+   * @example
+   * ```typescript
+   * // With URL
+   * .setCoverImage('https://example.com/image.jpg')
+   * 
+   * // With base64
+   * .setCoverImage('data:image/png;base64,iVBORw0KGg...')
+   * ```
    */
   setCoverImage(cover_image: string): PostBuilder {
     this.cover_image = cover_image
@@ -235,15 +250,50 @@ export class PostBuilder {
   /**
    * Create and publish the post immediately (convenience method)
    * 
-   * This does two API calls internally:
-   * 1. Creates draft with all content/metadata
-   * 2. Publishes the draft (flips to published state)
+   * This handles the complete workflow:
+   * 1. If cover image is base64, uploads it first and gets S3 URL
+   * 2. Creates draft with all content/metadata
+   * 3. Publishes the draft (flips to published state)
    * 
    * ✅ WORKING! (Oct 3, 2025)
+   * ✅ Base64 image upload support added! (Oct 4, 2025)
    */
   async publish(): Promise<CreatePostResponse> {
+    let coverImageToUse = this.cover_image
+
+    // Handle base64 image upload if needed
+    if (coverImageToUse && coverImageToUse.startsWith('data:image/')) {
+      if (!this.imageService) {
+        throw new Error(
+          'Image upload not available. ImageService not initialized. ' +
+          'This usually means the client was created incorrectly.'
+        )
+      }
+
+      // First create a draft to get a post ID for the image upload
+      const tempDraft = await this.postService.createPost({
+        title: this.title || 'Temporary Draft',
+        body_html: '<p>Temporary</p>',
+        type: this.type,
+        audience: this.audience,
+        is_published: false
+      })
+
+      // Upload the image
+      try {
+        coverImageToUse = await this.imageService.uploadImage(coverImageToUse, tempDraft.id)
+      } catch (error) {
+        // If image upload fails, continue without cover image
+        console.warn('Failed to upload cover image:', (error as Error).message)
+        coverImageToUse = undefined
+      }
+    }
+
+    // Build the post data with the final cover image URL
     const postData = this.build()
-    // First create as draft with all content/metadata
+    postData.cover_image = coverImageToUse
+
+    // Create as draft with all content/metadata
     const draft = await this.postService.createPost(postData)
     
     // Then publish it (just flips the state)

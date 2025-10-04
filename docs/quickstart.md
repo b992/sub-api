@@ -13,7 +13,7 @@ You'll need:
 ## Installation
 
 ```bash
-npm install substack-api
+npm install @b992/substack-api
 ```
 
 ## Authentication Setup
@@ -31,7 +31,7 @@ The Substack API uses cookie-based authentication. You need to extract your `con
 Import the library and create a client:
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 // Create client instance
 const client = new SubstackClient({
@@ -254,7 +254,7 @@ import type {
   Note,
   Comment,
   SubstackConfig
-} from 'substack-api';
+} from '@b992/substack-api';
 
 // Type-safe configuration
 const config: SubstackConfig = {
@@ -288,7 +288,7 @@ if (isOwnProfile(profile)) {
 Here's a comprehensive example demonstrating multiple features:
 
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 async function substackDashboard() {
   const client = new SubstackClient({

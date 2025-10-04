@@ -10,7 +10,8 @@ import {
   FolloweeService,
   ConnectivityService,
   ReactionService,
-  FeedService
+  FeedService,
+  ImageService
 } from './internal/services'
 import { InMemoryCache } from './internal/cache'
 import type { SubstackConfig } from './types'
@@ -30,6 +31,7 @@ export class SubstackClient {
   private readonly connectivityService: ConnectivityService
   private readonly reactionService: ReactionService
   private readonly feedService: FeedService
+  private readonly imageService: ImageService
   private readonly config: SubstackConfig
 
   constructor(config: SubstackConfig) {
@@ -58,6 +60,7 @@ export class SubstackClient {
     this.connectivityService = new ConnectivityService(this.publicationClient)
     this.reactionService = new ReactionService(this.publicationClient)
     this.feedService = new FeedService(this.publicationClient)
+    this.imageService = new ImageService(this.publicationClient)
   }
 
   /**
@@ -85,18 +88,19 @@ export class SubstackClient {
       const resolvedSlug = await this.slugService.getSlugForUserId(userId, profile.handle)
 
       return new OwnProfile(
-        profile,
-        this.publicationClient,
-        this.profileService,
-        this.postService,
-        this.noteService,
-        this.commentService,
-        this.followeeService,
-        this.reactionService,
-        this.config.defaultSectionId,  // Pass default section ID from config
-        this.feedService,
-        resolvedSlug,
-        this.slugService.getSlugForUserId.bind(this.slugService)
+        profile,                      // rawData
+        this.publicationClient,       // client
+        this.profileService,          // profileService
+        this.postService,             // postService
+        this.noteService,             // noteService
+        this.commentService,          // commentService
+        this.followeeService,         // followeeService
+        this.reactionService,         // reactionService
+        this.config.defaultSectionId, // defaultSectionId
+        this.feedService,             // feedService
+        this.imageService,            // imageService
+        resolvedSlug,                 // resolvedSlug
+        this.slugService.getSlugForUserId.bind(this.slugService) // slugResolver
       )
     } catch (error) {
       throw new Error(`Failed to get own profile: ${(error as Error).message}`)

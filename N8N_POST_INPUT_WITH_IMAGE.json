@@ -1,0 +1,38 @@
+{
+  "_comment": "Input Payload with Base64 Image Upload Support",
+  "_note": "The coverImage field accepts BOTH base64 and URLs",
+  
+  "title": "Article with Cover Image",
+  "subtitle": "Complete metadata example",
+  "content": "<h2>Introduction</h2><p>Your HTML content here...</p><p>With <strong>formatting</strong>!</p>",
+  
+  "_coverImageOption1": "Base64 string (will be uploaded automatically)",
+  "coverImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4AAAA...",
+  
+  "_coverImageOption2": "Or use a direct URL (no upload needed)",
+  "_coverImage_alternate": "https://example.com/images/cover.jpg",
+  
+  "seoTitle": "SEO-Optimized Title for Search Engines | Your Site",
+  "seoDescription": "Meta description that appears in Google search results",
+  "description": "Short preview description",
+  
+  "socialTitle": "📱 Catchy Social Media Title",
+  
+  "tags": ["AI", "Technology", "Tutorial"],
+  "sectionId": 194500,
+  
+  "commentPermissions": "everyone",
+  "commentSort": "best_first",
+  
+  "explicit": false,
+  "hideFromFeed": false,
+  
+  "_notes": [
+    "If coverImage starts with 'data:image/' it will be uploaded to Substack's S3",
+    "If coverImage is an HTTP(S) URL it will be used directly",
+    "The upload process creates a temp draft, uploads image, gets S3 URL, then publishes",
+    "Image upload adds 3-5 seconds to total processing time",
+    "Recommended image size: 1200x630px for optimal social sharing"
+  ]
+}
+

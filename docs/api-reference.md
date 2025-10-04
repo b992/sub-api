@@ -21,7 +21,7 @@ Creates a new SubstackClient instance with cookie-based authentication.
 
 **Example:**
 ```typescript
-import { SubstackClient } from 'substack-api';
+import { SubstackClient } from '@b992/substack-api';
 
 const client = new SubstackClient({
   apiKey: 'your-connect-sid-cookie-value',

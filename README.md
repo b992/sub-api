@@ -268,7 +268,7 @@ This library works directly in n8n workflows without needing an HTTP server!
 
 ```javascript
 // In n8n Code node
-const { SubstackClient } = require('substack-api');
+const { SubstackClient } = require('@b992/substack-api');
 
 const client = new SubstackClient({
   apiKey: process.env.SUBSTACK_API_KEY,
