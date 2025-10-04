@@ -151,4 +151,51 @@ describe('HttpClient', () => {
       expect(result).toEqual(mockResponse)
     })
   })
+
+  describe('globalPost', () => {
+    it('should make POST request to global Substack domain', async () => {
+      const mockResponse = { url: 'https://s3.amazonaws.com/image.png' }
+      const postData = { image: 'data:image/png;base64,...' }
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockResponse)
+      } as unknown as Response)
+
+      const result = await client.globalPost('/api/v1/image', postData)
+
+      // Should use https://substack.com, NOT the publication subdomain
+      expect(mockFetch).toHaveBeenCalledWith('https://substack.com/api/v1/image', {
+        method: 'POST',
+        body: JSON.stringify(postData),
+        headers: {
+          Cookie: 'connect.sid=test-api-key',
+          'Content-Type': 'application/json'
+        }
+      })
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should make POST request to global domain for attachment creation', async () => {
+      const mockResponse = { id: 'attachment-123' }
+      const postData = { url: 'https://s3.amazonaws.com/image.png', type: 'image' }
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockResponse)
+      } as unknown as Response)
+
+      const result = await client.globalPost('/api/v1/comment/attachment', postData)
+
+      expect(mockFetch).toHaveBeenCalledWith('https://substack.com/api/v1/comment/attachment', {
+        method: 'POST',
+        body: JSON.stringify(postData),
+        headers: {
+          Cookie: 'connect.sid=test-api-key',
+          'Content-Type': 'application/json'
+        }
+      })
+      expect(result).toEqual(mockResponse)
+    })
+  })
 })

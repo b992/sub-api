@@ -5,6 +5,7 @@ import type { SubstackConfig } from '../types'
 
 export class HttpClient {
   private readonly baseUrl: string
+  private readonly globalBaseUrl = 'https://substack.com'
   private readonly cookie: string
   private readonly perPage: number
 
@@ -56,12 +57,31 @@ export class HttpClient {
     return this.makeRequest<T>(url, options)
   }
 
+  /**
+   * Make a request to the global Substack API (not publication-specific)
+   * Used for image uploads and attachment creation
+   */
+  async globalRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const url = `${this.globalBaseUrl}${path}`
+    return this.makeRequest<T>(url, options)
+  }
+
   async get<T>(path: string): Promise<T> {
     return this.request<T>(path)
   }
 
   async post<T>(path: string, data?: unknown): Promise<T> {
     return this.request<T>(path, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined
+    })
+  }
+
+  /**
+   * POST request to global Substack API
+   */
+  async globalPost<T>(path: string, data?: unknown): Promise<T> {
+    return this.globalRequest<T>(path, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined
     })
