@@ -10,7 +10,8 @@ import type {
   PostService,
   NoteService,
   FolloweeService,
-  CommentService
+  CommentService,
+  FeedService
 } from '../internal/services'
 
 /**
@@ -25,7 +26,9 @@ export class OwnProfile extends Profile {
     noteService: NoteService,
     commentService: CommentService,
     private readonly followeeService: FolloweeService,
-    private readonly defaultSectionId?: number,
+    reactionService: ReactionService,
+    private readonly defaultSectionId: number | undefined,
+    private readonly feedService: FeedService,
     resolvedSlug?: string,
     slugResolver?: (userId: number, fallbackHandle?: string) => Promise<string | undefined>
   ) {
@@ -36,6 +39,7 @@ export class OwnProfile extends Profile {
       postService,
       noteService,
       commentService,
+      reactionService,
       resolvedSlug,
       slugResolver
     )
@@ -109,7 +113,7 @@ export class OwnProfile extends Profile {
       canonical_url: createdPost.canonical_url
     }
 
-    return new FullPost(fullPostData, this.client, this.commentService, this.postService)
+    return new FullPost(fullPostData, this.client, this.commentService, this.postService, this.reactionService)
   }
 
   /**
@@ -147,7 +151,7 @@ export class OwnProfile extends Profile {
           // Fetch full post data using the existing getPostById method
           try {
             const fullPost = await this.postService.getPostById(draftInfo.id)
-            yield new FullPost(fullPost, this.client, this.commentService, this.postService)
+            yield new FullPost(fullPost, this.client, this.commentService, this.postService, this.reactionService)
             totalYielded++
           } catch (error) {
             // Skip posts that can't be retrieved
@@ -196,6 +200,7 @@ export class OwnProfile extends Profile {
           this.postService,
           this.noteService,
           this.commentService,
+          this.reactionService,
           resolvedSlug,
           this.slugResolver
         )
@@ -230,7 +235,7 @@ export class OwnProfile extends Profile {
           if (options.limit && totalYielded >= options.limit) {
             return // Stop if we've reached the requested limit
           }
-          yield new Note(noteData, this.client)
+          yield new Note(noteData, this.client, this.reactionService)
           totalYielded++
         }
 
@@ -243,6 +248,82 @@ export class OwnProfile extends Profile {
       }
     } catch {
       // If the endpoint doesn't exist or fails, return empty iterator
+      yield* []
+    }
+  }
+
+  /**
+   * Get notes from the "For You" feed
+   * @param options - Options for limiting results
+   * @returns AsyncIterable<Note> - Notes from the feed
+   */
+  async *feedNotes(options: { limit?: number } = {}): AsyncIterable<Note> {
+    try {
+      let cursor: string | undefined = undefined
+      let totalYielded = 0
+
+      while (true) {
+        const paginatedNotes = await this.feedService.getForYouFeed({
+          cursor
+        })
+
+        if (!paginatedNotes.notes || paginatedNotes.notes.length === 0) {
+          break
+        }
+
+        for (const noteData of paginatedNotes.notes) {
+          if (options.limit && totalYielded >= options.limit) {
+            return
+          }
+          yield new Note(noteData, this.client, this.reactionService)
+          totalYielded++
+        }
+
+        if (!paginatedNotes.nextCursor) {
+          break
+        }
+
+        cursor = paginatedNotes.nextCursor
+      }
+    } catch {
+      yield* []
+    }
+  }
+
+  /**
+   * Get notes from the following feed
+   * @param options - Options for limiting results
+   * @returns AsyncIterable<Note> - Notes from people you follow
+   */
+  async *followingFeedNotes(options: { limit?: number } = {}): AsyncIterable<Note> {
+    try {
+      let cursor: string | undefined = undefined
+      let totalYielded = 0
+
+      while (true) {
+        const paginatedNotes = await this.feedService.getFollowingFeed({
+          cursor
+        })
+
+        if (!paginatedNotes.notes || paginatedNotes.notes.length === 0) {
+          break
+        }
+
+        for (const noteData of paginatedNotes.notes) {
+          if (options.limit && totalYielded >= options.limit) {
+            return
+          }
+          yield new Note(noteData, this.client, this.reactionService)
+          totalYielded++
+        }
+
+        if (!paginatedNotes.nextCursor) {
+          break
+        }
+
+        cursor = paginatedNotes.nextCursor
+      }
+    } catch {
       yield* []
     }
   }

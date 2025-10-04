@@ -1,6 +1,6 @@
 import type { SubstackPost, SubstackFullPost, PublishPostRequest } from '../internal'
 import type { HttpClient } from '../internal/http-client'
-import type { CommentService, PostService } from '../internal/services'
+import type { CommentService, PostService, ReactionService } from '../internal/services'
 import { Comment } from './comment'
 
 /**
@@ -25,7 +25,8 @@ export class PreviewPost {
     rawData: SubstackPost,
     private readonly client: HttpClient,
     private readonly commentService: CommentService,
-    private readonly postService: PostService
+    private readonly postService: PostService,
+    private readonly reactionService?: ReactionService
   ) {
     this.id = rawData.id
     this.title = rawData.title
@@ -53,7 +54,7 @@ export class PreviewPost {
   async fullPost(): Promise<FullPost> {
     try {
       const fullPostData = await this.postService.getPostById(this.id)
-      return new FullPost(fullPostData, this.client, this.commentService, this.postService)
+      return new FullPost(fullPostData, this.client, this.commentService, this.postService, this.reactionService)
     } catch (error) {
       throw new Error(`Failed to fetch full post ${this.id}: ${(error as Error).message}`)
     }
@@ -82,8 +83,11 @@ export class PreviewPost {
    * Like this post
    */
   async like(): Promise<void> {
-    // Implementation will like the post via the client
-    throw new Error('Post liking not implemented yet - requires like API')
+    if (!this.reactionService) {
+      throw new Error('ReactionService not available. Post must be created through Profile or OwnProfile.')
+    }
+    
+    await this.reactionService.likePost(this.id)
   }
 
   /**
@@ -124,7 +128,7 @@ export class PreviewPost {
       canonical_url: updatedPost.canonical_url
     }
 
-    return new FullPost(fullPostData, this.client, this.commentService, this.postService)
+    return new FullPost(fullPostData, this.client, this.commentService, this.postService, this.reactionService)
   }
 
   /**
@@ -144,7 +148,7 @@ export class PreviewPost {
       canonical_url: publishedPost.canonical_url
     }
 
-    return new FullPost(fullPostData, this.client, this.commentService, this.postService)
+    return new FullPost(fullPostData, this.client, this.commentService, this.postService, this.reactionService)
   }
 
   /**
@@ -172,9 +176,10 @@ export class FullPost extends PreviewPost {
     rawData: SubstackFullPost,
     client: HttpClient,
     commentService: CommentService,
-    postService: PostService
+    postService: PostService,
+    reactionService?: ReactionService
   ) {
-    super(rawData, client, commentService, postService)
+    super(rawData, client, commentService, postService, reactionService)
     // Prefer body_html from the full post response, fall back to htmlBody for backward compatibility
     this.htmlBody = rawData.body_html || rawData.htmlBody || ''
     this.slug = rawData.slug

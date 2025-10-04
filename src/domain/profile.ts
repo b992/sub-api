@@ -1,6 +1,6 @@
 import type { SubstackPublicProfile, SubstackFullProfile } from '../internal'
 import type { HttpClient } from '../internal/http-client'
-import type { ProfileService, CommentService, PostService, NoteService } from '../internal/services'
+import type { ProfileService, CommentService, PostService, NoteService, ReactionService } from '../internal/services'
 import { PreviewPost } from './post'
 import { Note } from './note'
 
@@ -22,6 +22,7 @@ export class Profile {
     protected readonly postService: PostService,
     protected readonly noteService: NoteService,
     protected readonly commentService: CommentService,
+    protected readonly reactionService: ReactionService,
     resolvedSlug?: string,
     protected readonly slugResolver?: (
       userId: number,
@@ -62,7 +63,7 @@ export class Profile {
           if (options.limit && totalYielded >= options.limit) {
             return // Stop if we've reached the requested limit
           }
-          yield new PreviewPost(postData, this.client, this.commentService, this.postService)
+          yield new PreviewPost(postData, this.client, this.commentService, this.postService, this.reactionService)
           totalYielded++
         }
 
@@ -101,7 +102,7 @@ export class Profile {
           if (options.limit && totalYielded >= options.limit) {
             return // Stop if we've reached the requested limit
           }
-          yield new Note(item, this.client)
+          yield new Note(item, this.client, this.reactionService)
           totalYielded++
         }
 

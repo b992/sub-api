@@ -8,7 +8,9 @@ import {
   CachingSlugService,
   CommentService,
   FolloweeService,
-  ConnectivityService
+  ConnectivityService,
+  ReactionService,
+  FeedService
 } from './internal/services'
 import { InMemoryCache } from './internal/cache'
 import type { SubstackConfig } from './types'
@@ -26,6 +28,8 @@ export class SubstackClient {
   private readonly commentService: CommentService
   private readonly followeeService: FolloweeService
   private readonly connectivityService: ConnectivityService
+  private readonly reactionService: ReactionService
+  private readonly feedService: FeedService
   private readonly config: SubstackConfig
 
   constructor(config: SubstackConfig) {
@@ -52,6 +56,8 @@ export class SubstackClient {
     this.commentService = new CommentService(this.publicationClient)
     this.followeeService = new FolloweeService(this.publicationClient)
     this.connectivityService = new ConnectivityService(this.publicationClient)
+    this.reactionService = new ReactionService(this.publicationClient)
+    this.feedService = new FeedService(this.publicationClient)
   }
 
   /**
@@ -86,7 +92,9 @@ export class SubstackClient {
         this.noteService,
         this.commentService,
         this.followeeService,
+        this.reactionService,
         this.config.defaultSectionId,  // Pass default section ID from config
+        this.feedService,
         resolvedSlug,
         this.slugService.getSlugForUserId.bind(this.slugService)
       )
@@ -112,6 +120,7 @@ export class SubstackClient {
         this.postService,
         this.noteService,
         this.commentService,
+        this.reactionService,
         resolvedSlug,
         this.slugService.getSlugForUserId.bind(this.slugService)
       )
@@ -142,6 +151,7 @@ export class SubstackClient {
         this.postService,
         this.noteService,
         this.commentService,
+        this.reactionService,
         resolvedSlug,
         this.slugService.getSlugForUserId.bind(this.slugService)
       )
@@ -160,7 +170,7 @@ export class SubstackClient {
 
     try {
       const post = await this.postService.getPostById(id)
-      return new FullPost(post, this.publicationClient, this.commentService, this.postService)
+      return new FullPost(post, this.publicationClient, this.commentService, this.postService, this.reactionService)
     } catch (error) {
       throw new Error(`Post with ID ${id} not found: ${(error as Error).message}`)
     }
@@ -176,7 +186,7 @@ export class SubstackClient {
 
     try {
       const noteData = await this.noteService.getNoteById(id)
-      return new Note(noteData, this.publicationClient)
+      return new Note(noteData, this.publicationClient, this.reactionService)
     } catch {
       throw new Error(`Note with ID ${id} not found`)
     }

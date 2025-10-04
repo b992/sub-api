@@ -1,5 +1,6 @@
 import type { SubstackNote, SubstackNoteComment } from '../internal'
 import type { HttpClient } from '../internal/http-client'
+import type { ReactionService } from '../internal/services/reaction-service'
 import { Comment } from './comment'
 
 /**
@@ -19,7 +20,8 @@ export class Note {
 
   constructor(
     private readonly rawData: SubstackNote,
-    private readonly client: HttpClient
+    private readonly client: HttpClient,
+    private readonly reactionService?: ReactionService
   ) {
     this.id = rawData.entity_key
     this.body = rawData.comment?.body || ''
@@ -63,9 +65,17 @@ export class Note {
    * Like this note
    */
   async like(): Promise<void> {
-    // Implementation will like the note via the client
-    // This requires authentication and proper API endpoints
-    throw new Error('Note liking not implemented yet - requires like API')
+    if (!this.reactionService) {
+      throw new Error('ReactionService not available. Note must be created through Profile or OwnProfile.')
+    }
+    
+    // Notes are comments internally, so we use the comment ID
+    const commentId = this.rawData.comment?.id
+    if (!commentId) {
+      throw new Error('Cannot like note: missing comment ID')
+    }
+    
+    await this.reactionService.addReaction(commentId, '❤')
   }
 
   /**
