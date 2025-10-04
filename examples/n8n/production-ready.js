@@ -77,11 +77,11 @@ try {
   // ---- Publish with share note ----
   log('Publishing post with share note');
   
-  // ✅ SDK has built-in publishWithNote() that:
+  // ✅ SDK has built-in publishWithNote() on profile that:
   // 1. Publishes the post
   // 2. Creates attachment with showWelcomeOnShare=true
   // 3. Posts note with attachment
-  const { post, note } = await builder.publishWithNote(shareNoteText);
+  const { post, note } = await profile.publishWithNote(builder, shareNoteText);
   
   log('Post published', { postId: post.id, slug: post.slug });
   log('Note created', { noteId: note.id });
