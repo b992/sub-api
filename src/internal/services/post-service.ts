@@ -333,6 +333,7 @@ export class PostService {
     const draftBylines = userId ? [{ id: userId, is_guest: false }] : []
     
     // Step 1: Create an empty draft (POST /api/v1/drafts)
+    // Substack requires ALL these fields even for initial draft creation
     const draftResponse = await this.httpClient.post<{
       id: number
       draft_title?: string
@@ -344,7 +345,20 @@ export class PostService {
       slug?: string
       canonical_url?: string
     }>('/api/v1/drafts', {
-      draft_bylines: draftBylines
+      draft_title: '',
+      draft_subtitle: '',
+      draft_body: JSON.stringify({ type: 'doc', content: [{ type: 'paragraph' }] }),
+      draft_bylines: draftBylines,
+      type: 'newsletter',
+      audience: 'everyone',
+      draft_podcast_url: '',
+      draft_podcast_duration: null,
+      draft_podcast_preview_upload_id: null,
+      draft_podcast_upload_id: null,
+      draft_video_upload_id: null,
+      draft_voiceover_upload_id: null,
+      draft_section_id: null,
+      section_chosen: false
     })
 
     const draftId = draftResponse.id
